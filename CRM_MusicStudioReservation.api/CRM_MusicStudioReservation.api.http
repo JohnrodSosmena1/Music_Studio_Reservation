@@ -1,0 +1,17 @@
+@CRM_MusicStudioReservation.api_HostAddress = http://localhost:5054
+
+GET {{CRM_MusicStudioReservation.api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+POST {{CRM_MusicStudioReservation.api_HostAddress}}/devices
+Content-Type: application/json
+
+{
+  "companyId": 1,
+  "deviceCode": "DEV001",
+  "deviceName": "Main PC",
+  "isActive": true,
+  "createdAt": "2026-09-03T09:50:00"
+}
+###

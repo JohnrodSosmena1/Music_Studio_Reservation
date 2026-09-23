@@ -1,0 +1,22 @@
+function Login-Admin {
+    $login = Invoke-RestMethod -Uri "https://localhost:7297/auth/login" -Method Post -ContentType "application/json" -Body '{"email":"admin@company1.com","password":"Admin@123"}' -SkipCertificateCheck
+    $global:token = $login.token
+    $global:auth = @{ Authorization = "Bearer $global:token" }
+    Write-Host "✓ Logged in as admin@company1.com" -ForegroundColor Green
+}
+
+function Test-Api {
+    param([string]$Path)
+    Invoke-RestMethod -Uri "https://localhost:7297$Path" -Headers $global:auth -SkipCertificateCheck
+}
+
+# Usage:
+# Login-Admin
+# Test-Api "/auth/me"
+# Test-Api "/tenant/1/studios"
+
+
+
+Login-Admin
+Test-Api "/auth/me"
+Test-Api "/tenant/1/studios"

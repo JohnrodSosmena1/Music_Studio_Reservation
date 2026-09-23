@@ -1,0 +1,21 @@
+## Build results
+[Bb]in/
+[Oo]bj/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## NuGet
+packages/
+*.nupkg
+
+## ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+
+## Misc
+*.log

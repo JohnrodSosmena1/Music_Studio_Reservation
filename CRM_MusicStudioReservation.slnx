@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="CRM_MusicStudioReservation.api/CRM_MusicStudioReservation.api.csproj" />
+  <Project Path="CRM_MusicStudioReservation.domain/CRM_MusicStudioReservation.domain.csproj" />
+  <Project Path="CRM_MusicStudioReservation.infrastructure/CRM_MusicStudioReservation.infrastructure.csproj" />
+  <Project Path="CRM_MusicStudioReservation/CRM.winforms.csproj" />
+</Solution>
