@@ -28,6 +28,7 @@
             this.btnRefresh = new System.Windows.Forms.Button();
             this.btnNewBooking = new System.Windows.Forms.Button();
 
+            this.pnlBody = new System.Windows.Forms.Panel();          // 👈 NEW
             this.dgvBookings = new System.Windows.Forms.DataGridView();
             this.colId = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colCode = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -36,12 +37,14 @@
             this.colStart = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colAmount = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colStatus = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colActions = new System.Windows.Forms.DataGridViewButtonColumn();
 
             this.pnlFooter = new System.Windows.Forms.Panel();
             this.lblCount = new System.Windows.Forms.Label();
 
             ((System.ComponentModel.ISupportInitialize)(this.dgvBookings)).BeginInit();
             this.pnlHeader.SuspendLayout();
+            this.pnlBody.SuspendLayout();
             this.pnlFooter.SuspendLayout();
             this.SuspendLayout();
 
@@ -181,9 +184,14 @@
             this.pnlHeader.Controls.Add(this.btnNewBooking);
             this.pnlHeader.Controls.Add(this.btnRefresh);
 
-            // dgvBookings
-            this.dgvBookings.Location = new System.Drawing.Point(30, 165);
-            this.dgvBookings.Size = new System.Drawing.Size(1240, 460);
+            // pnlBody — the wrapper that matches Inventory's pattern
+            this.pnlBody.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlBody.BackColor = System.Drawing.Color.Transparent;
+            this.pnlBody.Padding = new System.Windows.Forms.Padding(30, 15, 30, 15);
+            this.pnlBody.Name = "pnlBody";
+
+            // dgvBookings — docked Fill inside pnlBody, mirrors Inventory exactly
+            this.dgvBookings.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgvBookings.BackgroundColor = System.Drawing.Color.White;
             this.dgvBookings.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.dgvBookings.AllowUserToAddRows = false;
@@ -204,6 +212,8 @@
             this.dgvBookings.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(31, 41, 55);
             this.dgvBookings.GridColor = System.Drawing.Color.FromArgb(229, 231, 235);
             this.dgvBookings.Name = "dgvBookings";
+            this.dgvBookings.EnableHeadersVisualStyles = false;
+            this.dgvBookings.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DgvBookings_CellContentClick);
 
             // Text columns
             this.colId.HeaderText = "ID";
@@ -234,6 +244,16 @@
             this.colStatus.FillWeight = 70;
             this.colStatus.Name = "colStatus";
 
+            // colActions — styled exactly like Inventory's
+            this.colActions.HeaderText = "Actions";
+            this.colActions.Name = "colActions";
+            this.colActions.FillWeight = 100;
+            this.colActions.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.colActions.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(249, 250, 251);
+            this.colActions.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(139, 92, 246);
+            this.colActions.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(237, 233, 254);
+            this.colActions.DefaultCellStyle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+
             this.dgvBookings.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
                 this.colId,
                 this.colCode,
@@ -241,8 +261,11 @@
                 this.colStudio,
                 this.colStart,
                 this.colAmount,
-                this.colStatus
+                this.colStatus,
+                this.colActions
             });
+
+            this.pnlBody.Controls.Add(this.dgvBookings);
 
             // pnlFooter
             this.pnlFooter.Dock = System.Windows.Forms.DockStyle.Bottom;
@@ -260,13 +283,17 @@
 
             this.pnlFooter.Controls.Add(this.lblCount);
 
-            this.Controls.Add(this.dgvBookings);
+            // ==== FORM ASSEMBLY — ORDER MATTERS ====
+            // Fill must be added FIRST so it takes the remaining space.
+            // Top/Bottom are added AFTER so they keep their edges.
+            this.Controls.Add(this.pnlBody);
             this.Controls.Add(this.pnlFooter);
             this.Controls.Add(this.pnlHeader);
 
             ((System.ComponentModel.ISupportInitialize)(this.dgvBookings)).EndInit();
             this.pnlHeader.ResumeLayout(false);
             this.pnlHeader.PerformLayout();
+            this.pnlBody.ResumeLayout(false);
             this.pnlFooter.ResumeLayout(false);
             this.pnlFooter.PerformLayout();
             this.ResumeLayout(false);
@@ -286,6 +313,7 @@
         private System.Windows.Forms.Button btnReschedule;
         private System.Windows.Forms.Button btnRefresh;
         private System.Windows.Forms.Button btnNewBooking;
+        private System.Windows.Forms.Panel pnlBody;                 // 👈 NEW field
         private System.Windows.Forms.DataGridView dgvBookings;
         private System.Windows.Forms.DataGridViewTextBoxColumn colId;
         private System.Windows.Forms.DataGridViewTextBoxColumn colCode;
@@ -294,6 +322,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn colStart;
         private System.Windows.Forms.DataGridViewTextBoxColumn colAmount;
         private System.Windows.Forms.DataGridViewTextBoxColumn colStatus;
+        private System.Windows.Forms.DataGridViewButtonColumn colActions;
         private System.Windows.Forms.Panel pnlFooter;
         private System.Windows.Forms.Label lblCount;
     }

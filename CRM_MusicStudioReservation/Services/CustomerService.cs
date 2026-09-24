@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System;
-using System.Collections.Generic;
 using CRM.winforms.DTOs;
 
 namespace CRM.winforms.Services
@@ -90,6 +87,21 @@ namespace CRM.winforms.Services
             {
                 Console.WriteLine($"[CustomerService.Delete] {ex.Message}");
                 return false;
+            }
+        }
+
+        /// <summary>Fetches loyalty points info for all customers (derived from bookings + membership plan).</summary>
+        public async Task<List<CustomerLoyaltyDto>> GetLoyaltyAsync(int companyId)
+        {
+            try
+            {
+                var result = await _api.GetAsync<List<CustomerLoyaltyDto>>($"tenant/{companyId}/customers/loyalty");
+                return result ?? new List<CustomerLoyaltyDto>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CustomerService.GetLoyalty] {ex.Message}");
+                return new List<CustomerLoyaltyDto>();
             }
         }
     }

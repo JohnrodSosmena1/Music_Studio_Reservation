@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using CRM.winforms.Controls;
 using CRM.winforms.DTOs;
 using CRM.winforms.Services;
 
@@ -16,10 +15,8 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
         private readonly BookingService _bookingService;
 
         private List<BookingAdminDto> _allBookings = new();
-        private ActionButtonsColumn _actionsColumn;
         private bool _suppressFilterEvents = false;
         private bool _dateFiltersInitialized = false;
-        private int _lastHoveredRowIndex = -1;
 
         private int? _preselectedBookingId;
         private bool _preselectionConsumed = false;
@@ -38,13 +35,43 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
             return role == "staff";
         }
 
+        // ==================== SAFETY: ensure grid columns exist ====================
+
+        private void EnsureGridColumns()
+        {
+            if (dgvBookings == null || dgvBookings.IsDisposed) return;
+            if (dgvBookings.Columns.Count > 0) return;
+
+            dgvBookings.Columns.Clear();
+
+            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colId", HeaderText = "ID", FillWeight = 30 });
+            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colCode", HeaderText = "Code", FillWeight = 80 });
+            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colCustomer", HeaderText = "Client Name", FillWeight = 90 });
+            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colStudio", HeaderText = "Studio", FillWeight = 65 });
+            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colStart", HeaderText = "Start", FillWeight = 100 });
+            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colAmount", HeaderText = "Amount", FillWeight = 60 });
+            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colStatus", HeaderText = "Status", FillWeight = 70 });
+
+            var actionsCol = new DataGridViewButtonColumn
+            {
+                Name = "colActions",
+                HeaderText = "Actions",
+                FillWeight = 100,
+                FlatStyle = FlatStyle.Flat
+            };
+            actionsCol.DefaultCellStyle.BackColor = Color.FromArgb(249, 250, 251);
+            actionsCol.DefaultCellStyle.ForeColor = Color.FromArgb(139, 92, 246);
+            actionsCol.DefaultCellStyle.SelectionBackColor = Color.FromArgb(237, 233, 254);
+            actionsCol.DefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            dgvBookings.Columns.Add(actionsCol);
+        }
+
         // ==================== PUBLIC NAVIGATION API ====================
 
         public void PreselectBooking(int bookingId)
         {
             _preselectedBookingId = bookingId;
             _preselectionConsumed = false;
-
             TryApplyPreselection();
         }
 
@@ -66,7 +93,6 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
                 if (target.StartTime < fromDate) dtpFrom.Value = target.StartTime.Date.AddDays(-1);
                 if (target.StartTime >= toDate) dtpTo.Value = target.StartTime.Date.AddDays(1);
                 _suppressFilterEvents = false;
-
                 ApplyFilters();
             }
 
@@ -77,14 +103,9 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
                     row.Selected = true;
                     if (dgvBookings.Columns.Contains("colStatus"))
                         dgvBookings.CurrentCell = row.Cells["colStatus"];
-                    try
-                    {
-                        dgvBookings.FirstDisplayedScrollingRowIndex = row.Index;
-                    }
-                    catch { }
+                    try { dgvBookings.FirstDisplayedScrollingRowIndex = row.Index; } catch { }
 
                     ShowDetails(target);
-
                     _preselectionConsumed = true;
                     _preselectedBookingId = null;
                     return;
@@ -96,21 +117,9 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
 
         private async void BookingManagementForm_Load(object sender, EventArgs e)
         {
-            SetupActionsColumn();
+            EnsureGridColumns();       // 👈 mirror Inventory
             SetupFilters();
             await LoadBookingsAsync();
-        }
-
-        private void SetupActionsColumn()
-        {
-            if (this.IsDisposed || dgvBookings == null || dgvBookings.IsDisposed) return;
-
-            _actionsColumn = new ActionButtonsColumn();
-            dgvBookings.Columns.Add(_actionsColumn);
-
-            dgvBookings.CellMouseClick += DgvBookings_CellMouseClick;
-            dgvBookings.CellMouseMove += DgvBookings_CellMouseMove;
-            dgvBookings.CellMouseLeave += DgvBookings_CellMouseLeave;
         }
 
         private void SetupFilters()
@@ -143,9 +152,8 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
                 var companyId = _auth.CurrentUser?.CompanyId ?? 1;
                 var bookings = await _bookingService.GetAllAsync(companyId);
 
-                // 👇 GUARD — bail if form was disposed while waiting on the API
                 if (this.IsDisposed || dgvBookings == null || dgvBookings.IsDisposed) return;
-                if (dgvBookings.Columns.Count == 0) return;
+                if (dgvBookings.Columns.Count == 0) EnsureGridColumns();
 
                 _allBookings = bookings ?? new List<BookingAdminDto>();
                 ApplyFilters();
@@ -153,14 +161,10 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
             catch (Exception ex)
             {
                 if (this.IsDisposed) return;
-
                 _allBookings = new List<BookingAdminDto>();
                 ApplyFilters();
-                MessageBox.Show(
-                    $"Failed to load bookings: {ex.Message}",
-                    "Load Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                MessageBox.Show($"Failed to load bookings: {ex.Message}", "Load Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -176,16 +180,13 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
             var toDate = dtpTo.Value.Date.AddDays(1);
 
             var filtered = _allBookings.AsEnumerable();
-
-            filtered = filtered.Where(b =>
-                b.StartTime >= fromDate && b.StartTime < toDate);
+            filtered = filtered.Where(b => b.StartTime >= fromDate && b.StartTime < toDate);
 
             if (statusFilter != "All Statuses")
                 filtered = filtered.Where(b => BookingStatuses.GetName(b.BookingStatus) == statusFilter);
 
             if (!string.IsNullOrEmpty(search))
-                filtered = filtered.Where(b =>
-                    (b.BookingCode ?? "").ToLowerInvariant().Contains(search));
+                filtered = filtered.Where(b => (b.BookingCode ?? "").ToLowerInvariant().Contains(search));
 
             var list = filtered.OrderByDescending(b => b.StartTime).ToList();
             RenderRows(list);
@@ -225,31 +226,14 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
         private void RenderRows(List<BookingAdminDto> bookings)
         {
             if (this.IsDisposed || dgvBookings == null || dgvBookings.IsDisposed) return;
-            if (dgvBookings.Columns.Count == 0) return;   // 👈 safety
+            if (dgvBookings.Columns.Count == 0) EnsureGridColumns();
+            if (dgvBookings.Columns.Count == 0) return;
 
             dgvBookings.Rows.Clear();
-            var staff = IsStaff();
-
-            if (_actionsColumn == null || _actionsColumn.Index < 0)
-                return;
 
             foreach (var b in bookings)
             {
                 var statusText = BookingStatuses.GetName(b.BookingStatus);
-
-                var isPending = b.BookingStatus == BookingStatuses.Pending;
-                var isRescheduled = b.BookingStatus == BookingStatuses.Rescheduled;
-                var isConfirmed = b.BookingStatus == BookingStatuses.Confirmed;
-                var isCheckedIn = b.BookingStatus == BookingStatuses.CheckedIn;
-                var isCheckedOut = b.BookingStatus == BookingStatuses.CheckedOut;
-                var isCancelled = b.BookingStatus == BookingStatuses.Cancelled;
-
-                var showEdit = isPending || isRescheduled || isConfirmed;
-                var showConfirm = isPending || isRescheduled;
-                var showCheckIn = isConfirmed && staff;
-                var showCheckOut = isCheckedIn && staff;
-                var showDelete = isPending || isRescheduled || isConfirmed;
-                var showView = isCheckedIn || isCheckedOut || isCancelled;
 
                 var idx = dgvBookings.Rows.Add(
                     b.BookingId,
@@ -258,7 +242,8 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
                     $"Studio {b.StudioId}",
                     b.StartTime.ToString("MMM d, hh:mm tt"),
                     $"₱{b.TotalAmount:N2}",
-                    statusText
+                    statusText,
+                    "⋯ Actions"
                 );
 
                 if (dgvBookings.Columns.Contains("colStatus"))
@@ -268,63 +253,6 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
                     statusCell.Style.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
                 }
 
-                var buttons = new List<ActionButtonInfo>();
-
-                if (showEdit)
-                    buttons.Add(new ActionButtonInfo
-                    {
-                        ActionKey = "edit",
-                        Icon = "✏️",
-                        Label = "Edit",
-                        BackgroundColor = Color.FromArgb(139, 92, 246)
-                    });
-
-                if (showConfirm)
-                    buttons.Add(new ActionButtonInfo
-                    {
-                        ActionKey = "confirm",
-                        Icon = "✓",
-                        Label = "Confirm",
-                        BackgroundColor = Color.FromArgb(16, 185, 129)
-                    });
-
-                if (showCheckIn)
-                    buttons.Add(new ActionButtonInfo
-                    {
-                        ActionKey = "checkin",
-                        Icon = "▶",
-                        Label = "Check-In",
-                        BackgroundColor = Color.FromArgb(59, 130, 246)
-                    });
-
-                if (showCheckOut)
-                    buttons.Add(new ActionButtonInfo
-                    {
-                        ActionKey = "checkout",
-                        Icon = "■",
-                        Label = "Check-Out",
-                        BackgroundColor = Color.FromArgb(245, 158, 11)
-                    });
-
-                if (showDelete)
-                    buttons.Add(new ActionButtonInfo
-                    {
-                        ActionKey = "delete",
-                        Icon = "🗑️",
-                        Label = "Delete",
-                        BackgroundColor = Color.FromArgb(239, 68, 68)
-                    });
-
-                if (showView)
-                    buttons.Add(new ActionButtonInfo
-                    {
-                        ActionKey = "view",
-                        Icon = "👁",
-                        Label = "View",
-                        BackgroundColor = Color.FromArgb(167, 139, 250)
-                    });
-
-                dgvBookings.Rows[idx].Cells[_actionsColumn.Index].Value = buttons;
                 dgvBookings.Rows[idx].Tag = b.BookingId;
             }
 
@@ -344,166 +272,59 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
 
         // ==================== ACTION CLICKS ====================
 
-        private async void DgvBookings_CellMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        private async void DgvBookings_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (this.IsDisposed) return;
-            if (e.RowIndex < 0 || _actionsColumn == null || e.ColumnIndex != _actionsColumn.Index) return;
-
-            var cell = dgvBookings.Rows[e.RowIndex].Cells[e.ColumnIndex] as ActionButtonsCell;
-            if (cell == null) return;
-
-            var buttons = cell.GetButtons();
-            if (buttons == null || buttons.Count == 0) return;
-
-            var cellRect = dgvBookings.GetCellDisplayRectangle(e.ColumnIndex, e.RowIndex, false);
-            int gridX = cellRect.X + e.X;
-            int gridY = cellRect.Y + e.Y;
-
-            string clickedKey = null;
-            foreach (var btn in buttons)
-            {
-                if (btn.Bounds.Contains(gridX, gridY))
-                {
-                    clickedKey = btn.ActionKey;
-                    break;
-                }
-            }
-
-            if (string.IsNullOrEmpty(clickedKey)) return;
+            if (e.RowIndex < 0) return;
+            if (e.ColumnIndex != colActions.Index) return;
 
             var bookingId = (int)(dgvBookings.Rows[e.RowIndex].Tag ?? 0);
             var booking = _allBookings.FirstOrDefault(b => b.BookingId == bookingId);
             if (booking == null) return;
 
-            switch (clickedKey)
+            var isStaff = IsStaff();
+            var isPending = booking.BookingStatus == BookingStatuses.Pending;
+            var isRescheduled = booking.BookingStatus == BookingStatuses.Rescheduled;
+            var isConfirmed = booking.BookingStatus == BookingStatuses.Confirmed;
+            var isCheckedIn = booking.BookingStatus == BookingStatuses.CheckedIn;
+            var isCheckedOut = booking.BookingStatus == BookingStatuses.CheckedOut;
+            var isCancelled = booking.BookingStatus == BookingStatuses.Cancelled;
+
+            var menu = new ContextMenuStrip();
+
+            if (isPending || isRescheduled || isConfirmed)
             {
-                case "edit":
-                    await OpenEditAsync(booking);
-                    break;
-                case "confirm":
-                    await ChangeStatusAsync(booking, BookingStatuses.Confirmed, "confirm");
-                    break;
-                case "checkin":
-                    await ChangeStatusAsync(booking, BookingStatuses.CheckedIn, "check in");
-                    break;
-                case "checkout":
-                    await ChangeStatusAsync(booking, BookingStatuses.CheckedOut, "check out");
-                    break;
-                case "delete":
-                    await ArchiveBookingAsync(booking);
-                    break;
-                case "view":
-                    ShowDetails(booking);
-                    break;
+                menu.Items.Add("✏  Edit", null, async (s, args) => await OpenEditAsync(booking));
             }
-        }
-
-        private void DgvBookings_CellMouseMove(object sender, DataGridViewCellMouseEventArgs e)
-        {
-            if (this.IsDisposed) return;
-            if (e.RowIndex < 0 || _actionsColumn == null || e.ColumnIndex != _actionsColumn.Index)
+            if (isPending || isRescheduled)
             {
-                ClearHoverOnPreviousRow();
-                return;
+                menu.Items.Add("✓  Confirm", null, async (s, args) =>
+                    await ChangeStatusAsync(booking, BookingStatuses.Confirmed, "confirm"));
+            }
+            if (isConfirmed && isStaff)
+            {
+                menu.Items.Add("▶  Check-In", null, async (s, args) =>
+                    await ChangeStatusAsync(booking, BookingStatuses.CheckedIn, "check in"));
+            }
+            if (isCheckedIn && isStaff)
+            {
+                menu.Items.Add("■  Check-Out", null, async (s, args) =>
+                    await ChangeStatusAsync(booking, BookingStatuses.CheckedOut, "check out"));
+            }
+            if (isCheckedIn || isCheckedOut || isCancelled)
+            {
+                menu.Items.Add("👁  View", null, (s, args) => ShowDetails(booking));
+            }
+            if (isPending || isRescheduled || isConfirmed)
+            {
+                menu.Items.Add(new ToolStripSeparator());
+                menu.Items.Add("🗑  Delete", null, async (s, args) => await ArchiveBookingAsync(booking));
             }
 
-            var cell = dgvBookings.Rows[e.RowIndex].Cells[e.ColumnIndex] as ActionButtonsCell;
-            if (cell == null) return;
-
-            var buttons = cell.GetButtons();
-            if (buttons == null) return;
+            if (menu.Items.Count == 0) return;
 
             var cellRect = dgvBookings.GetCellDisplayRectangle(e.ColumnIndex, e.RowIndex, false);
-            int gridX = cellRect.X + e.X;
-            int gridY = cellRect.Y + e.Y;
-
-            bool changed = false;
-
-            foreach (var btn in buttons)
-            {
-                bool isHovered = btn.Bounds.Contains(gridX, gridY);
-                if (btn.IsHovered != isHovered)
-                {
-                    btn.IsHovered = isHovered;
-                    changed = true;
-                }
-            }
-
-            if (_lastHoveredRowIndex >= 0 && _lastHoveredRowIndex != e.RowIndex)
-            {
-                var prevCell = dgvBookings.Rows[_lastHoveredRowIndex].Cells[_actionsColumn.Index] as ActionButtonsCell;
-                var prevButtons = prevCell?.GetButtons();
-                if (prevButtons != null)
-                {
-                    foreach (var b in prevButtons)
-                    {
-                        if (b.IsHovered)
-                        {
-                            b.IsHovered = false;
-                            changed = true;
-                        }
-                    }
-                }
-            }
-
-            _lastHoveredRowIndex = e.RowIndex;
-
-            if (changed)
-                dgvBookings.InvalidateCell(cell);
-        }
-
-        private void DgvBookings_CellMouseLeave(object sender, DataGridViewCellEventArgs e)
-        {
-            if (this.IsDisposed) return;
-            if (e.RowIndex < 0 || _actionsColumn == null || e.ColumnIndex != _actionsColumn.Index) return;
-
-            var cell = dgvBookings.Rows[e.RowIndex].Cells[e.ColumnIndex] as ActionButtonsCell;
-            if (cell == null) return;
-
-            var buttons = cell.GetButtons();
-            if (buttons == null) return;
-
-            bool changed = false;
-
-            foreach (var btn in buttons)
-            {
-                if (btn.IsHovered)
-                {
-                    btn.IsHovered = false;
-                    changed = true;
-                }
-            }
-
-            _lastHoveredRowIndex = -1;
-
-            if (changed)
-                dgvBookings.InvalidateCell(cell);
-        }
-
-        private void ClearHoverOnPreviousRow()
-        {
-            if (this.IsDisposed) return;
-            if (_lastHoveredRowIndex < 0) return;
-            if (_actionsColumn == null) return;
-
-            var prevCell = dgvBookings.Rows[_lastHoveredRowIndex].Cells[_actionsColumn.Index] as ActionButtonsCell;
-            var prevButtons = prevCell?.GetButtons();
-            if (prevButtons != null)
-            {
-                bool changed = false;
-                foreach (var b in prevButtons)
-                {
-                    if (b.IsHovered)
-                    {
-                        b.IsHovered = false;
-                        changed = true;
-                    }
-                }
-                if (changed)
-                    dgvBookings.InvalidateCell(prevCell);
-            }
-
-            _lastHoveredRowIndex = -1;
+            menu.Show(dgvBookings, cellRect.Left, cellRect.Bottom);
         }
 
         // ==================== TOP BUTTONS ====================
@@ -516,19 +337,16 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
             picker.ShowDialog(this);
 
             if (this.IsDisposed) return;
-
-            if (picker.RescheduledSomething)
-                await LoadBookingsAsync();
+            if (picker.RescheduledSomething) await LoadBookingsAsync();
         }
 
         private async void btnNewBooking_Click(object sender, EventArgs e)
         {
             var companyId = _auth.CurrentUser?.CompanyId ?? 1;
-            using var dialog = new EditBookingForm(_api, companyId, null);   // 👈 null = create mode
+            using var dialog = new EditBookingForm(_api, companyId, null);
             dialog.ShowDialog(this);
 
-            if (dialog.SavedSuccessfully)
-                await LoadBookingsAsync();
+            if (dialog.SavedSuccessfully) await LoadBookingsAsync();
         }
 
         // ==================== DIALOGS ====================
@@ -542,9 +360,7 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
             dialog.ShowDialog(this);
 
             if (this.IsDisposed) return;
-
-            if (dialog.SavedSuccessfully)
-                await LoadBookingsAsync();
+            if (dialog.SavedSuccessfully) await LoadBookingsAsync();
         }
 
         private async System.Threading.Tasks.Task ChangeStatusAsync(BookingAdminDto booking, int newStatus, string verb)
@@ -553,9 +369,7 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
 
             var confirm = MessageBox.Show(
                 $"Are you sure you want to {verb} booking '{booking.BookingCode}'?",
-                $"Confirm {verb}",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
+                $"Confirm {verb}", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (confirm != DialogResult.Yes) return;
 
@@ -574,7 +388,6 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
                     "check out" => "checked out",
                     _ => verb + "ed"
                 };
-
                 MessageBox.Show($"Booking {pastTense} successfully.", "Success",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 await LoadBookingsAsync();
@@ -593,9 +406,7 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
             var confirm = MessageBox.Show(
                 $"Delete (archive) booking '{booking.BookingCode}'?\n\n" +
                 "The booking will be marked as Cancelled and kept in the database.",
-                "Confirm Delete",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning);
+                "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
             if (confirm != DialogResult.Yes) return;
 
@@ -633,9 +444,7 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
                 $"Check-In: {(b.CheckInTime.HasValue ? b.CheckInTime.Value.ToString("MMM d hh:mm tt") : "—")}\n" +
                 $"Check-Out: {(b.CheckOutTime.HasValue ? b.CheckOutTime.Value.ToString("MMM d hh:mm tt") : "—")}\n" +
                 $"Notes: {b.Notes ?? "(none)"}",
-                "Booking Details",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
+                "Booking Details", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }

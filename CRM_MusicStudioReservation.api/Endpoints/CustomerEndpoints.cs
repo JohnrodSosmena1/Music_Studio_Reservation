@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using System.Threading.Tasks;
+using CRM_MusicStudioReservation.api.DTOs;
 using CRM_MusicStudioReservation.api.Helpers;
 using CRM_MusicStudioSystem.infrastructure.services;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,9 @@ namespace CRM_MusicStudioReservation.api.Endpoints
             var group = app.MapGroup("/tenant/{companyId:int}/customers");
 
             group.MapPut("/{id:int}", UpdateCustomer);
+
+            // 👇 Loyalty points endpoint
+            group.MapGet("/loyalty", GetCustomerLoyalty);
         }
 
         // ==================== UPDATE (also handles Enable/Disable) ====================
@@ -31,7 +35,6 @@ namespace CRM_MusicStudioReservation.api.Endpoints
             if (customer is null)
                 return Results.NotFound(new { message = $"Customer {id} not found." });
 
-            // 👇 Snapshot before changes
             var oldSnapshot = $"Code={customer.CustomerCode}, Name={customer.CustomerName}, Active={customer.IsActive}";
             var oldIsActive = customer.IsActive;
 
@@ -55,12 +58,10 @@ namespace CRM_MusicStudioReservation.api.Endpoints
 
             await db.SaveChangesAsync();
 
-            // 👇 Determine action type
             var action = "Update";
             if (dto.IsActive.HasValue && dto.IsActive.Value != oldIsActive)
                 action = dto.IsActive.Value ? "Activate" : "Deactivate";
 
-            // 👇 AUDIT LOG
             await AuditHelper.LogAsync(auditService, httpContext, user, companyId,
                 action: action,
                 entityName: "Customer",
@@ -79,6 +80,89 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                 isActive = customer.IsActive,
                 createdAt = customer.CreatedAt
             });
+        }
+
+        // ==================== LOYALTY (derived + adjustment) ====================
+        // Rule: every non-cancelled booking = 5 points by default.
+        //       If the customer has an Active membership, use the plan's LoyaltyPointsPerBooking.
+        //       Plus any stored adjustment from Membership.LoyaltyPoints (admin override).
+        private static async Task<IResult> GetCustomerLoyalty(
+            int companyId,
+            ITenantDbContextFactory factory)
+        {
+            await using var db = await factory.CreateAsync(companyId);
+
+            // Enum aliases for clarity
+            var cancelledStatus = CRM_MusicStudioReservation.domain.enums.BookingStatus.Cancelled;
+            var activeMembership = CRM_MusicStudioReservation.domain.enums.MembershipStatus.Active;
+
+            // 1. All customers
+            var customers = await db.Customers.AsNoTracking().ToListAsync();
+
+            // 2. Booking counts per customer (exclude Cancelled)
+            var bookingCounts = await db.Bookings
+                .AsNoTracking()
+                .Where(b => b.BookingStatus != cancelledStatus)
+                .GroupBy(b => b.CustomerId)
+                .Select(g => new { CustomerId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.CustomerId, x => x.Count);
+
+            // 3. Active memberships with their plans
+            var memberships = await db.Memberships
+                .AsNoTracking()
+                .Include(m => m.MembershipPlan)
+                .Where(m => m.MembershipStatus == activeMembership)
+                .ToListAsync();
+
+            // 4. Build response
+            var results = customers.Select(c =>
+            {
+                var bookingCount = bookingCounts.TryGetValue(c.CustomerId, out var cnt) ? cnt : 0;
+                var membership = memberships.FirstOrDefault(m => m.CustomerId == c.CustomerId);
+
+                int pointsPerBooking = 5;   // default for non-members
+                string? planName = null;
+                int? planId = null;
+                int? membershipId = null;
+                int adjustment = 0;
+                string status = "None";
+
+                if (membership?.MembershipPlan != null && membership.MembershipPlan.IsActive)
+                {
+                    pointsPerBooking = membership.MembershipPlan.LoyaltyPointsPerBooking;
+                    planName = membership.MembershipPlan.PlanName;
+                    planId = membership.MembershipPlanId;
+                    membershipId = membership.MembershipId;
+                    adjustment = membership.LoyaltyPoints;   // 👈 stored admin adjustment
+                    status = membership.MembershipStatus.ToString();
+                }
+
+                var fromBookings = bookingCount * pointsPerBooking;
+                var totalPoints = fromBookings + adjustment;
+
+                return new CustomerLoyaltyDto
+                {
+                    CustomerId = c.CustomerId,
+                    CustomerCode = c.CustomerCode ?? string.Empty,
+                    CustomerName = c.CustomerName ?? string.Empty,
+                    Email = c.EmailAddress,
+                    ContactNumber = c.ContactNumber,
+                    TotalBookings = bookingCount,
+                    MembershipId = membershipId,
+                    MembershipPlanId = planId,
+                    PlanName = planName,
+                    PointsPerBooking = pointsPerBooking,
+                    PointsFromBookings = fromBookings,
+                    PointsAdjustment = adjustment,
+                    TotalPointsEarned = totalPoints,
+                    PointsBalance = totalPoints,
+                    MembershipStatus = status
+                };
+            })
+            .OrderByDescending(x => x.TotalPointsEarned)
+            .ToList();
+
+            return Results.Ok(results);
         }
     }
 
