@@ -55,7 +55,12 @@ namespace CRM_MusicStudioSystem.infrastructure.services
 
             decimal total = Math.Round(studio.HourlyRate * duration, 2);
 
-            booking.BookingCode = booking.BookingCode ?? $"BKG-{Guid.NewGuid().ToString("N").ToUpperInvariant().Substring(0, 8)}";
+            // Auto-generate sequential booking code: BK-00001, BK-00002, etc.
+            if (string.IsNullOrWhiteSpace(booking.BookingCode))
+            {
+                var count = await db.Bookings.CountAsync();
+                booking.BookingCode = $"BK-{(count + 1):D5}";
+            }
 
             // ✅ New bookings ALWAYS start as Pending
             booking.BookingStatus = BookingStatus.Pending;

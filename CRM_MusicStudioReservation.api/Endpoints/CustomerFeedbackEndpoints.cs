@@ -16,7 +16,7 @@ namespace CRM_MusicStudioReservation.api.Endpoints
     {
         public static void MapCustomerFeedbackEndpoints(this WebApplication app)
         {
-            var group = app.MapGroup("/tenant/{companyId:int}/customer-feedback");
+            var group = app.MapGroup("/tenant/{companyId:int}/customer-feedback").RequireAuthorization();
 
             // GET /customer-feedback - List all feedback with pagination
             group.MapGet("", async (int companyId, ITenantDbContextFactory tenantFactory, int page = 1, int pageSize = 20) =>

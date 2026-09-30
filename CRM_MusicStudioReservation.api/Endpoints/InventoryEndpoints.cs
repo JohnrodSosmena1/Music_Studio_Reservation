@@ -16,8 +16,8 @@ namespace CRM_MusicStudioReservation.api.Endpoints
     {
         public static void MapInventoryEndpoints(this WebApplication app)
         {
-            var categoryGroup = app.MapGroup("/tenant/{companyId:int}/inventory-categories");
-            var itemGroup = app.MapGroup("/tenant/{companyId:int}/inventory-items");
+            var categoryGroup = app.MapGroup("/tenant/{companyId:int}/inventory-categories").RequireAuthorization();
+            var itemGroup = app.MapGroup("/tenant/{companyId:int}/inventory-items").RequireAuthorization();
 
             // ==================== INVENTORY CATEGORIES ====================
 
@@ -112,10 +112,11 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                 await using var db = await tenantFactory.CreateAsync(companyId);
                 var query = db.InventoryItems.AsNoTracking()
                     .Include(i => i.InventoryCategory)
+                    .Include(i => i.Studio)
                     .Where(i => i.IsActive);
 
                 if (!string.IsNullOrWhiteSpace(search))
-                    query = query.Where(i => i.ItemName.Contains(search) || i.ItemCode.Contains(search));
+                    query = query.Where(i => i.ItemName.Contains(search) || i.ItemCode.Contains(search) || (i.Location != null && i.Location.Contains(search)));
 
                 var totalItems = await query.CountAsync();
                 var totalPages = (totalItems + pageSize - 1) / pageSize;
@@ -133,11 +134,15 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                     ItemName = i.ItemName,
                     InventoryCategoryId = i.InventoryCategoryId,
                     CategoryName = i.InventoryCategory?.CategoryName,
+                    StudioId = i.StudioId,
+                    StudioName = i.Studio?.StudioName,
+                    StudioCode = i.Studio?.StudioCode,
                     QuantityOnHand = i.QuantityOnHand,
                     ReorderLevel = i.ReorderLevel,
                     UnitCost = i.UnitCost,
                     IsActive = i.IsActive,
                     CreatedAt = i.CreatedAt,
+                    UpdatedAt = i.UpdatedAt,
                     Condition = i.Condition,
                     Availability = i.Availability,
                     Location = i.Location
@@ -158,6 +163,7 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                 await using var db = await tenantFactory.CreateAsync(companyId);
                 var item = await db.InventoryItems.AsNoTracking()
                     .Include(i => i.InventoryCategory)
+                    .Include(i => i.Studio)
                     .FirstOrDefaultAsync(i => i.InventoryItemId == id);
 
                 if (item == null) return Results.NotFound();
@@ -169,11 +175,15 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                     ItemName = item.ItemName,
                     InventoryCategoryId = item.InventoryCategoryId,
                     CategoryName = item.InventoryCategory?.CategoryName,
+                    StudioId = item.StudioId,
+                    StudioName = item.Studio?.StudioName,
+                    StudioCode = item.Studio?.StudioCode,
                     QuantityOnHand = item.QuantityOnHand,
                     ReorderLevel = item.ReorderLevel,
                     UnitCost = item.UnitCost,
                     IsActive = item.IsActive,
                     CreatedAt = item.CreatedAt,
+                    UpdatedAt = item.UpdatedAt,
                     Condition = item.Condition,
                     Availability = item.Availability,
                     Location = item.Location
@@ -191,22 +201,50 @@ namespace CRM_MusicStudioReservation.api.Endpoints
             {
                 await using var db = await tenantFactory.CreateAsync(companyId);
 
-                var categoryExists = await db.InventoryCategories.AnyAsync(c => c.InventoryCategoryId == createDto.InventoryCategoryId);
-                if (!categoryExists)
+                var category = await db.InventoryCategories.FirstOrDefaultAsync(c => c.InventoryCategoryId == createDto.InventoryCategoryId);
+                if (category == null)
                     return Results.BadRequest("Inventory category not found");
+
+                // Auto-generate sequential ItemCode if empty
+                var itemCode = createDto.ItemCode?.Trim();
+                if (string.IsNullOrWhiteSpace(itemCode))
+                {
+                    var prefix = GetCategoryPrefix(category.CategoryName);
+                    var count = await db.InventoryItems.CountAsync(x => x.ItemCode.StartsWith(prefix));
+                    itemCode = $"{prefix}-{(count + 1):D4}";
+                    while (await db.InventoryItems.AnyAsync(x => x.ItemCode == itemCode))
+                    {
+                        count++;
+                        itemCode = $"{prefix}-{(count + 1):D4}";
+                    }
+                }
+
+                string? location = createDto.Location?.Trim();
+                Studio? assignedStudio = null;
+                if (createDto.StudioId.HasValue && createDto.StudioId.Value > 0)
+                {
+                    assignedStudio = await db.Studios.FirstOrDefaultAsync(s => s.StudioId == createDto.StudioId.Value);
+                    if (assignedStudio != null && string.IsNullOrWhiteSpace(location))
+                    {
+                        location = assignedStudio.StudioName;
+                    }
+                }
 
                 var item = new InventoryItem
                 {
-                    ItemCode = createDto.ItemCode,
-                    ItemName = createDto.ItemName,
+                    ItemCode = itemCode,
+                    ItemName = createDto.ItemName.Trim(),
                     InventoryCategoryId = createDto.InventoryCategoryId,
+                    StudioId = assignedStudio?.StudioId,
                     QuantityOnHand = createDto.QuantityOnHand,
                     ReorderLevel = createDto.ReorderLevel,
                     UnitCost = createDto.UnitCost,
                     IsActive = true,
                     Condition = string.IsNullOrWhiteSpace(createDto.Condition) ? "Good" : createDto.Condition,
                     Availability = string.IsNullOrWhiteSpace(createDto.Availability) ? "Available" : createDto.Availability,
-                    Location = createDto.Location
+                    Location = location,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 };
 
                 db.InventoryItems.Add(item);
@@ -217,7 +255,7 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                     action: "Create",
                     entityId: item.InventoryItemId,
                     entityName: "InventoryItem",
-                    newValue: $"Code={item.ItemCode}, Name={item.ItemName}, CategoryId={item.InventoryCategoryId}, Qty={item.QuantityOnHand}, Cost=₱{item.UnitCost:N2}, Condition={item.Condition}, Location={item.Location ?? "—"}");
+                    newValue: $"Code={item.ItemCode}, Name={item.ItemName}, CategoryId={item.InventoryCategoryId}, StudioId={item.StudioId}, Qty={item.QuantityOnHand}, Cost=₱{item.UnitCost:N2}, Condition={item.Condition}, Location={item.Location ?? "—"}");
 
                 return Results.Created($"/tenant/{companyId}/inventory-items/{item.InventoryItemId}",
                     new InventoryItemResponseDto
@@ -226,11 +264,16 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                         ItemCode = item.ItemCode,
                         ItemName = item.ItemName,
                         InventoryCategoryId = item.InventoryCategoryId,
+                        CategoryName = category.CategoryName,
+                        StudioId = item.StudioId,
+                        StudioName = assignedStudio?.StudioName,
+                        StudioCode = assignedStudio?.StudioCode,
                         QuantityOnHand = item.QuantityOnHand,
                         ReorderLevel = item.ReorderLevel,
                         UnitCost = item.UnitCost,
                         IsActive = item.IsActive,
                         CreatedAt = item.CreatedAt,
+                        UpdatedAt = item.UpdatedAt,
                         Condition = item.Condition,
                         Availability = item.Availability,
                         Location = item.Location
@@ -248,10 +291,10 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                 ClaimsPrincipal user) =>
             {
                 await using var db = await tenantFactory.CreateAsync(companyId);
-                var item = await db.InventoryItems.FirstOrDefaultAsync(i => i.InventoryItemId == id);
+                var item = await db.InventoryItems.Include(x => x.Studio).Include(x => x.InventoryCategory).FirstOrDefaultAsync(i => i.InventoryItemId == id);
                 if (item == null) return Results.NotFound();
 
-                var oldSnapshot = $"Code={item.ItemCode}, Name={item.ItemName}, Qty={item.QuantityOnHand}, Cost=₱{item.UnitCost:N2}, Condition={item.Condition}, Location={item.Location ?? "—"}, Active={item.IsActive}";
+                var oldSnapshot = $"Code={item.ItemCode}, Name={item.ItemName}, StudioId={item.StudioId}, Qty={item.QuantityOnHand}, Cost=₱{item.UnitCost:N2}, Condition={item.Condition}, Location={item.Location ?? "—"}, Active={item.IsActive}";
                 var oldIsActive = item.IsActive;
 
                 if (!string.IsNullOrWhiteSpace(updateDto.ItemCode)) item.ItemCode = updateDto.ItemCode;
@@ -263,10 +306,33 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                 if (updateDto.IsActive.HasValue) item.IsActive = updateDto.IsActive.Value;
                 if (!string.IsNullOrWhiteSpace(updateDto.Condition)) item.Condition = updateDto.Condition;
                 if (!string.IsNullOrWhiteSpace(updateDto.Availability)) item.Availability = updateDto.Availability;
+
+                if (updateDto.StudioId.HasValue)
+                {
+                    if (updateDto.StudioId.Value > 0)
+                    {
+                        item.StudioId = updateDto.StudioId.Value;
+                        var s = await db.Studios.FirstOrDefaultAsync(x => x.StudioId == updateDto.StudioId.Value);
+                        if (s != null && string.IsNullOrWhiteSpace(updateDto.Location))
+                        {
+                            item.Location = s.StudioName;
+                        }
+                    }
+                    else
+                    {
+                        item.StudioId = null;
+                    }
+                }
+
                 if (updateDto.Location != null) item.Location = updateDto.Location;
+                item.UpdatedAt = DateTime.UtcNow;
 
                 db.InventoryItems.Update(item);
                 await db.SaveChangesAsync();
+
+                // Reload studio/category for response
+                await db.Entry(item).Reference(x => x.Studio).LoadAsync();
+                await db.Entry(item).Reference(x => x.InventoryCategory).LoadAsync();
 
                 // 👇 Determine action
                 var action = "Update";
@@ -279,7 +345,7 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                     entityName: "InventoryItem",
                     entityId: item.InventoryItemId,
                     oldValue: oldSnapshot,
-                    newValue: $"Code={item.ItemCode}, Name={item.ItemName}, Qty={item.QuantityOnHand}, Cost=₱{item.UnitCost:N2}, Condition={item.Condition}, Location={item.Location ?? "—"}, Active={item.IsActive}");
+                    newValue: $"Code={item.ItemCode}, Name={item.ItemName}, StudioId={item.StudioId}, Qty={item.QuantityOnHand}, Cost=₱{item.UnitCost:N2}, Condition={item.Condition}, Location={item.Location ?? "—"}, Active={item.IsActive}");
 
                 return Results.Ok(new InventoryItemResponseDto
                 {
@@ -287,11 +353,16 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                     ItemCode = item.ItemCode,
                     ItemName = item.ItemName,
                     InventoryCategoryId = item.InventoryCategoryId,
+                    CategoryName = item.InventoryCategory?.CategoryName,
+                    StudioId = item.StudioId,
+                    StudioName = item.Studio?.StudioName,
+                    StudioCode = item.Studio?.StudioCode,
                     QuantityOnHand = item.QuantityOnHand,
                     ReorderLevel = item.ReorderLevel,
                     UnitCost = item.UnitCost,
                     IsActive = item.IsActive,
                     CreatedAt = item.CreatedAt,
+                    UpdatedAt = item.UpdatedAt,
                     Condition = item.Condition,
                     Availability = item.Availability,
                     Location = item.Location
@@ -379,6 +450,24 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                     Location = item.Location
                 });
             });
+        }
+
+        private static string GetCategoryPrefix(string? categoryName)
+        {
+            if (string.IsNullOrWhiteSpace(categoryName)) return "ITEM";
+            var name = categoryName.Trim().ToLowerInvariant();
+
+            if (name.Contains("mic")) return "MIC";
+            if (name.Contains("guitar") || name.Contains("bass")) return "GTR";
+            if (name.Contains("amp")) return "AMP";
+            if (name.Contains("drum") || name.Contains("percussion")) return "DRM";
+            if (name.Contains("synth") || name.Contains("keyboard") || name.Contains("piano")) return "SYN";
+            if (name.Contains("access") || name.Contains("cable") || name.Contains("stand") || name.Contains("pick")) return "ACC";
+            if (name.Contains("furn") || name.Contains("chair") || name.Contains("panel")) return "FRN";
+            if (name.Contains("light") || name.Contains("softbox")) return "LGT";
+            if (name.Contains("headphone") || name.Contains("audio") || name.Contains("equip")) return "AUD";
+
+            return "ITEM";
         }
     }
 }

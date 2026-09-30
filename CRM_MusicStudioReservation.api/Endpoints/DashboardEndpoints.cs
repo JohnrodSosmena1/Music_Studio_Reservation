@@ -1,4 +1,4 @@
-﻿using CRM_MusicStudioSystem.infrastructure.services;
+using CRM_MusicStudioSystem.infrastructure.services;
 using Microsoft.EntityFrameworkCore;
 using CRM_MusicStudioReservation.api.DTOs;
 using CRM_MusicStudioReservation.domain.enums;
@@ -12,9 +12,9 @@ namespace CRM_MusicStudioReservation.api.Endpoints
         {
             var group = app.MapGroup("/tenant/{companyId:int}/dashboard");
 
-            group.MapGet("/admin", GetAdminDashboard);
-            group.MapGet("/staff", GetStaffDashboard);
-            group.MapGet("/client/{customerId:int}", GetClientDashboard);
+            group.MapGet("/admin", GetAdminDashboard).RequireAuthorization(p => p.RequireRole("SuperAdmin", "Admin"));
+            group.MapGet("/staff", GetStaffDashboard).RequireAuthorization(p => p.RequireRole("SuperAdmin", "Admin", "Staff"));
+            group.MapGet("/client/{customerId:int}", GetClientDashboard).RequireAuthorization(p => p.RequireRole("SuperAdmin", "Admin", "Staff", "Client"));
         }
 
         // ==================== ADMIN DASHBOARD ====================

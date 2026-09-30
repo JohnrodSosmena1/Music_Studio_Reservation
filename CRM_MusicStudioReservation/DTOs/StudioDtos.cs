@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -31,8 +31,41 @@ namespace CRM.winforms.DTOs
         [JsonPropertyName("isActive")]
         public bool IsActive { get; set; }
 
+        [JsonPropertyName("inventoryItemsCount")]
+        public int InventoryItemsCount { get; set; }
+
         [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; }
+    }
+
+    public class StudioInventoryItemDto
+    {
+        [JsonPropertyName("inventoryItemId")]
+        public int InventoryItemId { get; set; }
+
+        [JsonPropertyName("itemCode")]
+        public string ItemCode { get; set; } = string.Empty;
+
+        [JsonPropertyName("itemName")]
+        public string ItemName { get; set; } = string.Empty;
+
+        [JsonPropertyName("categoryName")]
+        public string? CategoryName { get; set; }
+
+        [JsonPropertyName("quantityOnHand")]
+        public int QuantityOnHand { get; set; }
+
+        [JsonPropertyName("condition")]
+        public string Condition { get; set; } = "Good";
+
+        [JsonPropertyName("availability")]
+        public string Availability { get; set; } = "Available";
+
+        [JsonPropertyName("location")]
+        public string? Location { get; set; }
+
+        [JsonPropertyName("unitCost")]
+        public decimal UnitCost { get; set; }
     }
 
     /// <summary>Matches the PagingResponse&lt;T&gt; from the API.</summary>

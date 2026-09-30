@@ -1,4 +1,4 @@
-﻿namespace CRM_MusicStudioReservation.Forms
+namespace CRM_MusicStudioReservation.Forms
 {
     partial class MainForm
     {
@@ -28,7 +28,8 @@
             this.btnNavStudios = new System.Windows.Forms.Button();
             this.btnNavInventory = new System.Windows.Forms.Button();
             this.btnNavReports = new System.Windows.Forms.Button();
-            this.btnNavEngagement = new System.Windows.Forms.Button();   // 👈 NEW
+            this.btnNavEngagement = new System.Windows.Forms.Button();
+            this.btnNavTerms = new System.Windows.Forms.Button();
             this.pnlSidebarFooter = new System.Windows.Forms.Panel();
             this.btnLogout = new System.Windows.Forms.Button();
 
@@ -103,7 +104,8 @@
             this.btnNavStudios = MakeNavButton("🎸   Studios", "btnNavStudios", 150);
             this.btnNavInventory = MakeNavButton("📦   Inventory", "btnNavInventory", 200);
             this.btnNavReports = MakeNavButton("📊   Reports", "btnNavReports", 250);
-            this.btnNavEngagement = MakeNavButton("🎁   Engagement", "btnNavEngagement", 300);   // 👈 NEW
+            this.btnNavEngagement = MakeNavButton("🎁   Engagement", "btnNavEngagement", 300);
+            this.btnNavTerms = MakeNavButton("📜   Terms & Policy", "btnNavTerms", 350);
 
             this.pnlNavItems.Controls.Add(this.btnNavDashboard);
             this.pnlNavItems.Controls.Add(this.btnNavBookings);
@@ -111,7 +113,8 @@
             this.pnlNavItems.Controls.Add(this.btnNavStudios);
             this.pnlNavItems.Controls.Add(this.btnNavInventory);
             this.pnlNavItems.Controls.Add(this.btnNavReports);
-            this.pnlNavItems.Controls.Add(this.btnNavEngagement);   // 👈 NEW
+            this.pnlNavItems.Controls.Add(this.btnNavEngagement);
+            this.pnlNavItems.Controls.Add(this.btnNavTerms);
 
             // Sidebar footer (logout)
             this.pnlSidebarFooter.Dock = System.Windows.Forms.DockStyle.Bottom;
@@ -243,7 +246,8 @@
         private System.Windows.Forms.Button btnNavStudios;
         private System.Windows.Forms.Button btnNavInventory;
         private System.Windows.Forms.Button btnNavReports;
-        private System.Windows.Forms.Button btnNavEngagement;   // 👈 NEW
+        private System.Windows.Forms.Button btnNavEngagement;
+        private System.Windows.Forms.Button btnNavTerms;
         private System.Windows.Forms.Panel pnlSidebarFooter;
         private System.Windows.Forms.Button btnLogout;
 

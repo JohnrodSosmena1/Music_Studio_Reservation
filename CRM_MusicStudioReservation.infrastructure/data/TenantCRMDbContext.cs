@@ -1,4 +1,4 @@
-﻿using CRM_MusicStudioReservation.domain.entities;
+using CRM_MusicStudioReservation.domain.entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CRM_MusicStudioSystem.infrastructure.data
@@ -35,6 +35,12 @@ namespace CRM_MusicStudioSystem.infrastructure.data
         public DbSet<CustomerReview> CustomerReviews => Set<CustomerReview>();
 
         public DbSet<CustomerInquiry> CustomerInquiries => Set<CustomerInquiry>();
+
+        // 👇 NEW — Terms & Conditions + Promotion Rationale
+        public DbSet<TermsAndConditions> TermsAndConditions => Set<TermsAndConditions>();
+        public DbSet<UserTandCAcknowledgment> UserTandCAcknowledgments => Set<UserTandCAcknowledgment>();
+        public DbSet<PromotionRationale> PromotionRationales => Set<PromotionRationale>();
+        public DbSet<PromotionSegment> PromotionSegments => Set<PromotionSegment>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -99,6 +105,7 @@ namespace CRM_MusicStudioSystem.infrastructure.data
                 entity.Property(x => x.StudioName).HasMaxLength(200).IsRequired();
                 entity.Property(x => x.HourlyRate).HasPrecision(18, 2);
                 entity.Property(x => x.Description).HasMaxLength(1000);
+                entity.Property(x => x.UpdatedAt);
                 entity.HasIndex(x => x.StudioCode).IsUnique();
             });
 
@@ -194,11 +201,22 @@ namespace CRM_MusicStudioSystem.infrastructure.data
                 entity.Property(x => x.ItemCode).HasMaxLength(50).IsRequired();
                 entity.Property(x => x.ItemName).HasMaxLength(200).IsRequired();
                 entity.Property(x => x.UnitCost).HasPrecision(18, 2);
+                entity.Property(x => x.Condition).HasMaxLength(50);
+                entity.Property(x => x.Availability).HasMaxLength(50);
+                entity.Property(x => x.Location).HasMaxLength(200);
+
+                entity.HasIndex(x => x.ItemCode).IsUnique();
+                entity.HasIndex(x => x.StudioId);
 
                 entity.HasOne(x => x.InventoryCategory)
                     .WithMany(c => c.InventoryItems)
                     .HasForeignKey(x => x.InventoryCategoryId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Studio)
+                    .WithMany(s => s.InventoryItems)
+                    .HasForeignKey(x => x.StudioId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             builder.Entity<Promotion>(entity =>
@@ -246,6 +264,115 @@ namespace CRM_MusicStudioSystem.infrastructure.data
                 entity.HasIndex(x => x.ModerationStatus);
                 entity.HasIndex(x => x.CustomerId);
                 entity.HasIndex(x => x.CreatedAt);
+            });
+
+            // 👇 NEW — TermsAndConditions configuration
+            builder.Entity<TermsAndConditions>(entity =>
+            {
+                entity.HasKey(x => x.TandCId);
+
+                entity.Property(x => x.TandCCode).HasMaxLength(50).IsRequired();
+                entity.HasIndex(x => x.TandCCode).IsUnique();
+
+                entity.Property(x => x.TandCType).HasMaxLength(50).IsRequired();
+                entity.HasIndex(x => x.TandCType);
+
+                entity.Property(x => x.Title).HasMaxLength(300).IsRequired();
+
+                entity.Property(x => x.Content).HasColumnType("nvarchar(max)").IsRequired();
+
+                entity.Property(x => x.Version).HasMaxLength(20).IsRequired();
+
+                entity.Property(x => x.Status).HasMaxLength(30).IsRequired();
+                entity.HasIndex(x => x.Status);
+
+                entity.Property(x => x.AuthorUserId).HasMaxLength(128);
+                entity.Property(x => x.AuthorName).HasMaxLength(200);
+                entity.Property(x => x.ApprovedByUserId).HasMaxLength(128);
+                entity.Property(x => x.ApprovedByName).HasMaxLength(200);
+                entity.Property(x => x.ChangeNotes).HasMaxLength(2000);
+
+                entity.HasIndex(x => new { x.TandCType, x.Status });
+            });
+
+            // 👇 NEW — UserTandCAcknowledgment configuration
+            builder.Entity<UserTandCAcknowledgment>(entity =>
+            {
+                entity.HasKey(x => x.AcknowledgmentId);
+
+                entity.Property(x => x.TandCVersion).HasMaxLength(20).IsRequired();
+                entity.Property(x => x.TandCType).HasMaxLength(50).IsRequired();
+                entity.Property(x => x.AcknowledgmentContext).HasMaxLength(50).IsRequired();
+                entity.Property(x => x.IpAddress).HasMaxLength(50);
+                entity.Property(x => x.UserAgent).HasMaxLength(500);
+
+                entity.HasOne(x => x.TermsAndConditions)
+                    .WithMany(t => t.Acknowledgments)
+                    .HasForeignKey(x => x.TandCId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Customer)
+                    .WithMany()
+                    .HasForeignKey(x => x.CustomerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(x => x.TandCId);
+                entity.HasIndex(x => x.CustomerId);
+                entity.HasIndex(x => x.AcknowledgedAt);
+            });
+
+            // 👇 NEW — PromotionRationale configuration
+            builder.Entity<PromotionRationale>(entity =>
+            {
+                entity.HasKey(x => x.PromotionRationaleId);
+
+                entity.Property(x => x.PurposeType).HasMaxLength(100).IsRequired();
+                entity.Property(x => x.TargetAudience).HasMaxLength(200);
+                entity.Property(x => x.TriggerCondition).HasMaxLength(500);
+                entity.Property(x => x.ExpectedKpi).HasMaxLength(500);
+                entity.Property(x => x.Budget).HasPrecision(18, 2);
+                entity.Property(x => x.WorkflowStatus).HasMaxLength(30).IsRequired();
+                entity.HasIndex(x => x.WorkflowStatus);
+                entity.Property(x => x.ApprovedByUserId).HasMaxLength(128);
+                entity.Property(x => x.ApprovedByName).HasMaxLength(200);
+                entity.Property(x => x.RejectionReason).HasMaxLength(1000);
+                entity.Property(x => x.RationaleNotes).HasMaxLength(2000);
+                entity.Property(x => x.ActualRevenueDelta).HasPrecision(18, 2);
+                entity.Property(x => x.RoiSummary).HasMaxLength(2000);
+
+                entity.HasOne(x => x.Promotion)
+                    .WithMany()
+                    .HasForeignKey(x => x.PromotionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(x => x.PromotionId).IsUnique();
+            });
+
+            // 👇 NEW — PromotionSegment configuration
+            builder.Entity<PromotionSegment>(entity =>
+            {
+                entity.HasKey(x => x.PromotionSegmentId);
+
+                entity.Property(x => x.SegmentName).HasMaxLength(100).IsRequired();
+
+                entity.HasOne(x => x.PromotionRationale)
+                    .WithMany(r => r.Segments)
+                    .HasForeignKey(x => x.PromotionRationaleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // 👇 Customer configuration (3NF, unique auto-gen code, split names)
+            builder.Entity<Customer>(entity =>
+            {
+                entity.HasKey(x => x.CustomerId);
+                entity.Property(x => x.CustomerCode).HasMaxLength(50).IsRequired();
+                entity.HasIndex(x => x.CustomerCode).IsUnique();
+                entity.Property(x => x.FirstName).HasMaxLength(100).IsRequired();
+                entity.Property(x => x.LastName).HasMaxLength(100).IsRequired();
+                entity.Property(x => x.CustomerName).HasMaxLength(200).IsRequired();
+                entity.Property(x => x.ContactNumber).HasMaxLength(50);
+                entity.Property(x => x.EmailAddress).HasMaxLength(255);
+                entity.Property(x => x.Address).HasMaxLength(500);
             });
         }
     }

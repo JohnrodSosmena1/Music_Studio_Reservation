@@ -16,14 +16,14 @@ namespace CRM_MusicStudioReservation.api.Endpoints
     {
         public static void MapStudioEndpoints(this WebApplication app)
         {
-            var group = app.MapGroup("/tenant/{companyId:int}/studios");
+            var group = app.MapGroup("/tenant/{companyId:int}/studios").RequireAuthorization();
 
             // ==================== GET ALL ====================
             group.MapGet("", async (int companyId, ITenantDbContextFactory tenantFactory,
                 int page = 1, int pageSize = 20, string? search = null, bool includeInactive = false) =>
             {
                 await using var tenantDb = await tenantFactory.CreateAsync(companyId);
-                var query = tenantDb.Studios.AsNoTracking();
+                var query = tenantDb.Studios.AsNoTracking().Include(s => s.InventoryItems).AsQueryable();
 
                 if (!includeInactive) query = query.Where(s => s.IsActive);
 
@@ -49,7 +49,9 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                     Capacity = s.Capacity,
                     Description = s.Description,
                     IsActive = s.IsActive,
-                    CreatedAt = s.CreatedAt
+                    InventoryItemsCount = s.InventoryItems?.Count(i => i.IsActive) ?? 0,
+                    CreatedAt = s.CreatedAt,
+                    UpdatedAt = s.UpdatedAt
                 }).ToList();
 
                 return Results.Ok(new PagingResponse<StudioResponseDto>
@@ -66,7 +68,7 @@ namespace CRM_MusicStudioReservation.api.Endpoints
             group.MapGet("/{id:int}", async (int companyId, ITenantDbContextFactory tenantFactory, int id) =>
             {
                 await using var tenantDb = await tenantFactory.CreateAsync(companyId);
-                var s = await tenantDb.Studios.AsNoTracking().FirstOrDefaultAsync(x => x.StudioId == id);
+                var s = await tenantDb.Studios.AsNoTracking().Include(x => x.InventoryItems).FirstOrDefaultAsync(x => x.StudioId == id);
                 if (s == null) return Results.NotFound();
 
                 return Results.Ok(new StudioResponseDto
@@ -79,8 +81,38 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                     Capacity = s.Capacity,
                     Description = s.Description,
                     IsActive = s.IsActive,
-                    CreatedAt = s.CreatedAt
+                    InventoryItemsCount = s.InventoryItems?.Count(i => i.IsActive) ?? 0,
+                    CreatedAt = s.CreatedAt,
+                    UpdatedAt = s.UpdatedAt
                 });
+            });
+
+            // ==================== GET STUDIO INVENTORY ====================
+            group.MapGet("/{id:int}/inventory", async (int companyId, ITenantDbContextFactory tenantFactory, int id) =>
+            {
+                await using var tenantDb = await tenantFactory.CreateAsync(companyId);
+                var studioExists = await tenantDb.Studios.AnyAsync(s => s.StudioId == id);
+                if (!studioExists) return Results.NotFound(new { message = $"Studio {id} not found." });
+
+                var items = await tenantDb.InventoryItems.AsNoTracking()
+                    .Include(i => i.InventoryCategory)
+                    .Where(i => i.StudioId == id && i.IsActive)
+                    .OrderBy(i => i.ItemName)
+                    .Select(i => new StudioInventoryItemDto
+                    {
+                        InventoryItemId = i.InventoryItemId,
+                        ItemCode = i.ItemCode,
+                        ItemName = i.ItemName,
+                        CategoryName = i.InventoryCategory != null ? i.InventoryCategory.CategoryName : "General",
+                        QuantityOnHand = i.QuantityOnHand,
+                        Condition = i.Condition,
+                        Availability = i.Availability,
+                        Location = i.Location,
+                        UnitCost = i.UnitCost
+                    })
+                    .ToListAsync();
+
+                return Results.Ok(items);
             });
 
             // ==================== CREATE ====================
@@ -97,15 +129,30 @@ namespace CRM_MusicStudioReservation.api.Endpoints
 
                 await using var tenantDb = await tenantFactory.CreateAsync(companyId);
 
+                // Auto-generate sequential StudioCode: STD001, STD002, STD003...
+                var code = createDto.StudioCode?.Trim();
+                if (string.IsNullOrWhiteSpace(code))
+                {
+                    var count = await tenantDb.Studios.CountAsync();
+                    code = $"STD{(count + 1):D3}";
+                    while (await tenantDb.Studios.AnyAsync(s => s.StudioCode == code))
+                    {
+                        count++;
+                        code = $"STD{(count + 1):D3}";
+                    }
+                }
+
                 var studio = new Studio
                 {
-                    StudioCode = createDto.StudioCode,
-                    StudioName = createDto.StudioName,
+                    StudioCode = code,
+                    StudioName = createDto.StudioName.Trim(),
                     StudioType = createDto.StudioType,
                     HourlyRate = createDto.HourlyRate,
                     Capacity = createDto.Capacity,
-                    Description = createDto.Description,
-                    IsActive = true
+                    Description = createDto.Description?.Trim(),
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 };
 
                 tenantDb.Studios.Add(studio);
@@ -128,7 +175,9 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                     Capacity = studio.Capacity,
                     Description = studio.Description,
                     IsActive = studio.IsActive,
-                    CreatedAt = studio.CreatedAt
+                    InventoryItemsCount = 0,
+                    CreatedAt = studio.CreatedAt,
+                    UpdatedAt = studio.UpdatedAt
                 };
 
                 return Results.Created($"/tenant/{companyId}/studios/{studio.StudioId}", response);
@@ -162,6 +211,7 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                 if (updateDto.Description != null) studio.Description = updateDto.Description;
                 if (updateDto.IsActive.HasValue) studio.IsActive = updateDto.IsActive.Value;
 
+                studio.UpdatedAt = DateTime.UtcNow;
                 await tenantDb.SaveChangesAsync();
 
                 // 👇 Determine action type
@@ -177,6 +227,8 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                     oldValue: oldSnapshot,
                     newValue: $"Code={studio.StudioCode}, Name={studio.StudioName}, Rate=₱{studio.HourlyRate:N2}, Capacity={studio.Capacity}, Active={studio.IsActive}");
 
+                var itemCount = await tenantDb.InventoryItems.CountAsync(i => i.StudioId == studio.StudioId && i.IsActive);
+
                 var response = new StudioResponseDto
                 {
                     StudioId = studio.StudioId,
@@ -187,7 +239,9 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                     Capacity = studio.Capacity,
                     Description = studio.Description,
                     IsActive = studio.IsActive,
-                    CreatedAt = studio.CreatedAt
+                    InventoryItemsCount = itemCount,
+                    CreatedAt = studio.CreatedAt,
+                    UpdatedAt = studio.UpdatedAt
                 };
 
                 return Results.Ok(response);

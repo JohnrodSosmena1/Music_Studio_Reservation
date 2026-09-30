@@ -118,29 +118,50 @@ namespace CRM_MusicStudioReservation.infrastructure.Migrations.TenantCRMDb
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CustomerId"));
 
                     b.Property<string>("Address")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("ContactNumber")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CustomerCode")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("CustomerName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("EmailAddress")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("CustomerId");
+
+                    b.HasIndex("CustomerCode")
+                        .IsUnique();
 
                     b.ToTable("Customers");
                 });
@@ -354,11 +375,13 @@ namespace CRM_MusicStudioReservation.infrastructure.Migrations.TenantCRMDb
 
                     b.Property<string>("Availability")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Condition")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -380,7 +403,8 @@ namespace CRM_MusicStudioReservation.infrastructure.Migrations.TenantCRMDb
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("Location")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<int>("QuantityOnHand")
                         .HasColumnType("int");
@@ -388,13 +412,24 @@ namespace CRM_MusicStudioReservation.infrastructure.Migrations.TenantCRMDb
                     b.Property<int>("ReorderLevel")
                         .HasColumnType("int");
 
+                    b.Property<int?>("StudioId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("UnitCost")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("InventoryItemId");
 
                     b.HasIndex("InventoryCategoryId");
+
+                    b.HasIndex("ItemCode")
+                        .IsUnique();
+
+                    b.HasIndex("StudioId");
 
                     b.ToTable("InventoryItems");
                 });
@@ -589,6 +624,115 @@ namespace CRM_MusicStudioReservation.infrastructure.Migrations.TenantCRMDb
                     b.ToTable("Promotions");
                 });
 
+            modelBuilder.Entity("CRM_MusicStudioReservation.domain.entities.PromotionRationale", b =>
+                {
+                    b.Property<int>("PromotionRationaleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PromotionRationaleId"));
+
+                    b.Property<int>("ActualRedemptions")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("ActualRevenueDelta")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ApprovedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("ApprovedByUserId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<decimal?>("Budget")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ExpectedKpi")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("MaxRedemptions")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PromotionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PurposeType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("RationaleNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("RoiSummary")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("TargetAudience")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("TriggerCondition")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("WorkflowStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("PromotionRationaleId");
+
+                    b.HasIndex("PromotionId")
+                        .IsUnique();
+
+                    b.HasIndex("WorkflowStatus");
+
+                    b.ToTable("PromotionRationales");
+                });
+
+            modelBuilder.Entity("CRM_MusicStudioReservation.domain.entities.PromotionSegment", b =>
+                {
+                    b.Property<int>("PromotionSegmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PromotionSegmentId"));
+
+                    b.Property<int>("PromotionRationaleId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SegmentName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("PromotionSegmentId");
+
+                    b.HasIndex("PromotionRationaleId");
+
+                    b.ToTable("PromotionSegments");
+                });
+
             modelBuilder.Entity("CRM_MusicStudioReservation.domain.entities.Studio", b =>
                 {
                     b.Property<int>("StudioId")
@@ -626,6 +770,9 @@ namespace CRM_MusicStudioReservation.infrastructure.Migrations.TenantCRMDb
 
                     b.Property<int>("StudioType")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("StudioId");
 
@@ -708,6 +855,149 @@ namespace CRM_MusicStudioReservation.infrastructure.Migrations.TenantCRMDb
                     b.HasKey("SupplierId");
 
                     b.ToTable("Suppliers");
+                });
+
+            modelBuilder.Entity("CRM_MusicStudioReservation.domain.entities.TermsAndConditions", b =>
+                {
+                    b.Property<int>("TandCId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TandCId"));
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ApprovedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("ApprovedByUserId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("AuthorName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("AuthorUserId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("ChangeNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("MajorVersion")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MinorVersion")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("RequiresReAcceptance")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("TandCCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("TandCType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("TandCId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TandCCode")
+                        .IsUnique();
+
+                    b.HasIndex("TandCType");
+
+                    b.HasIndex("TandCType", "Status");
+
+                    b.ToTable("TermsAndConditions");
+                });
+
+            modelBuilder.Entity("CRM_MusicStudioReservation.domain.entities.UserTandCAcknowledgment", b =>
+                {
+                    b.Property<int>("AcknowledgmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AcknowledgmentId"));
+
+                    b.Property<DateTime>("AcknowledgedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AcknowledgmentContext")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("TandCId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TandCType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("TandCVersion")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("AcknowledgmentId");
+
+                    b.HasIndex("AcknowledgedAt");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("TandCId");
+
+                    b.ToTable("UserTandCAcknowledgments");
                 });
 
             modelBuilder.Entity("CRM_MusicStudioReservation.domain.entities.Booking", b =>
@@ -807,7 +1097,14 @@ namespace CRM_MusicStudioReservation.infrastructure.Migrations.TenantCRMDb
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("CRM_MusicStudioReservation.domain.entities.Studio", "Studio")
+                        .WithMany("InventoryItems")
+                        .HasForeignKey("StudioId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("InventoryCategory");
+
+                    b.Navigation("Studio");
                 });
 
             modelBuilder.Entity("CRM_MusicStudioReservation.domain.entities.LoyaltyTransaction", b =>
@@ -840,6 +1137,47 @@ namespace CRM_MusicStudioReservation.infrastructure.Migrations.TenantCRMDb
                     b.Navigation("MembershipPlan");
                 });
 
+            modelBuilder.Entity("CRM_MusicStudioReservation.domain.entities.PromotionRationale", b =>
+                {
+                    b.HasOne("CRM_MusicStudioReservation.domain.entities.Promotion", "Promotion")
+                        .WithMany()
+                        .HasForeignKey("PromotionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Promotion");
+                });
+
+            modelBuilder.Entity("CRM_MusicStudioReservation.domain.entities.PromotionSegment", b =>
+                {
+                    b.HasOne("CRM_MusicStudioReservation.domain.entities.PromotionRationale", "PromotionRationale")
+                        .WithMany("Segments")
+                        .HasForeignKey("PromotionRationaleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PromotionRationale");
+                });
+
+            modelBuilder.Entity("CRM_MusicStudioReservation.domain.entities.UserTandCAcknowledgment", b =>
+                {
+                    b.HasOne("CRM_MusicStudioReservation.domain.entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CRM_MusicStudioReservation.domain.entities.TermsAndConditions", "TermsAndConditions")
+                        .WithMany("Acknowledgments")
+                        .HasForeignKey("TandCId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("TermsAndConditions");
+                });
+
             modelBuilder.Entity("CRM_MusicStudioReservation.domain.entities.Booking", b =>
                 {
                     b.Navigation("BookingServices");
@@ -855,14 +1193,26 @@ namespace CRM_MusicStudioReservation.infrastructure.Migrations.TenantCRMDb
                     b.Navigation("Memberships");
                 });
 
+            modelBuilder.Entity("CRM_MusicStudioReservation.domain.entities.PromotionRationale", b =>
+                {
+                    b.Navigation("Segments");
+                });
+
             modelBuilder.Entity("CRM_MusicStudioReservation.domain.entities.Studio", b =>
                 {
                     b.Navigation("Bookings");
+
+                    b.Navigation("InventoryItems");
                 });
 
             modelBuilder.Entity("CRM_MusicStudioReservation.domain.entities.StudioService", b =>
                 {
                     b.Navigation("BookingServices");
+                });
+
+            modelBuilder.Entity("CRM_MusicStudioReservation.domain.entities.TermsAndConditions", b =>
+                {
+                    b.Navigation("Acknowledgments");
                 });
 #pragma warning restore 612, 618
         }

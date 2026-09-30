@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -14,6 +14,7 @@ using CRM_MusicStudioReservation.Forms.Dashboards;
 using CRM_MusicStudioReservation.Forms.Bookings;
 using CRM_MusicStudioReservation.Forms.Customers;
 using CRM_MusicStudioReservation.Forms.Studios;
+using CRM_MusicStudioReservation.Forms.Terms;
 
 
 namespace CRM_MusicStudioReservation.Forms
@@ -46,6 +47,7 @@ namespace CRM_MusicStudioReservation.Forms
             WireNavButton(btnNavInventory, "Inventory", ShowInventoryManagement);
             WireNavButton(btnNavEngagement, "Customer Engagement", ShowCustomerEngagement);
             WireNavButton(btnNavReports, "Reports", ShowReports);
+            WireNavButton(btnNavTerms, "Terms & Conditions", ShowTermsManagement);
 
             SetActiveNav(btnNavDashboard);
             ApplyRoleBasedAccess();
@@ -167,6 +169,15 @@ namespace CRM_MusicStudioReservation.Forms
             lblPageTitle.Text = "Customer Engagement";
         }
 
+        // ==================== TERMS & CONDITIONS ====================
+
+        private void ShowTermsManagement()
+        {
+            var termsForm = new TermsManagementForm(_auth, _api);
+            LoadChildForm(termsForm);
+            lblPageTitle.Text = "Terms & Conditions";
+        }
+
         // ==================== EMBED CHILD FORM (delayed dispose) ====================
 
         private void LoadChildForm(Form child)
@@ -256,6 +267,7 @@ namespace CRM_MusicStudioReservation.Forms
                     btnNavInventory.Visible = false;
                     btnNavEngagement.Visible = false;
                     btnNavReports.Visible = false;
+                    btnNavTerms.Visible = false;
                     break;
 
                 case "staff":

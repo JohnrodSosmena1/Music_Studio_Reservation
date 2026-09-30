@@ -8,9 +8,8 @@ namespace CRM_MusicStudioReservation.api.DTOs
 {
     public class StudioCreateDto
     {
-        [Required]
         [StringLength(50)]
-        public string StudioCode { get; set; } = null!;
+        public string? StudioCode { get; set; }
 
         [Required]
         [StringLength(100)]
@@ -61,6 +60,21 @@ namespace CRM_MusicStudioReservation.api.DTOs
         public int Capacity { get; set; }
         public string? Description { get; set; }
         public bool IsActive { get; set; }
+        public int InventoryItemsCount { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
+
+    public class StudioInventoryItemDto
+    {
+        public int InventoryItemId { get; set; }
+        public string ItemCode { get; set; } = null!;
+        public string ItemName { get; set; } = null!;
+        public string? CategoryName { get; set; }
+        public int QuantityOnHand { get; set; }
+        public string Condition { get; set; } = "Good";
+        public string Availability { get; set; } = "Available";
+        public string? Location { get; set; }
+        public decimal UnitCost { get; set; }
     }
 }

@@ -23,8 +23,11 @@ namespace CRM_MusicStudioReservation.domain.entities
 
         /// <summary>Free text — e.g. "Studio A", "Storage Room"</summary>
         public string? Location { get; set; }
+        public int? StudioId { get; set; }
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation
         public virtual InventoryCategory? InventoryCategory { get; set; }
+        public virtual Studio? Studio { get; set; }
     }
 }

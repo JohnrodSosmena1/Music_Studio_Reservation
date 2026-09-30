@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System;
@@ -67,6 +67,41 @@ namespace CRM.winforms.Services
             {
                 Console.WriteLine($"[StudioService.Update] {ex.Message}");
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Fetches all inventory items assigned to a studio.
+        /// </summary>
+        public async Task<List<StudioInventoryItemDto>> GetStudioInventoryAsync(int companyId, int studioId)
+        {
+            try
+            {
+                var result = await _api.GetAsync<List<StudioInventoryItemDto>>(
+                    $"tenant/{companyId}/studios/{studioId}/inventory");
+                return result ?? new List<StudioInventoryItemDto>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[StudioService.GetStudioInventory] {ex.Message}");
+                return new List<StudioInventoryItemDto>();
+            }
+        }
+
+        /// <summary>
+        /// Deletes/archives a studio.
+        /// </summary>
+        public async Task<bool> DeleteAsync(int companyId, int studioId)
+        {
+            try
+            {
+                await _api.DeleteAsync($"tenant/{companyId}/studios/{studioId}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[StudioService.Delete] {ex.Message}");
+                return false;
             }
         }
     }

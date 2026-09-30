@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -134,13 +134,17 @@ namespace CRM_MusicStudioReservation.Forms.Customers
 
             foreach (var c in customers)
             {
+                var displayName = !string.IsNullOrWhiteSpace(c.FirstName) || !string.IsNullOrWhiteSpace(c.LastName)
+                    ? $"{c.FirstName} {c.LastName}".Trim()
+                    : c.CustomerName;
+
                 var statusText = c.IsActive ? "Active" : "Inactive";
                 var actionLabel = c.IsActive ? "Edit / Disable" : "Edit / Enable";
 
                 var idx = dgvCustomers.Rows.Add(
                     c.CustomerId,
                     c.CustomerCode,
-                    c.CustomerName,
+                    displayName,
                     c.ContactNumber ?? "—",
                     c.EmailAddress ?? "—",
                     statusText,
@@ -170,8 +174,11 @@ namespace CRM_MusicStudioReservation.Forms.Customers
             }
 
             var filtered = _allCustomers
-                .Where(c => c.CustomerName.ToLowerInvariant().Contains(search)
-                         || c.CustomerCode.ToLowerInvariant().Contains(search)
+                .Where(c => (c.CustomerName ?? "").ToLowerInvariant().Contains(search)
+                         || (c.FirstName ?? "").ToLowerInvariant().Contains(search)
+                         || (c.LastName ?? "").ToLowerInvariant().Contains(search)
+                         || (c.CustomerCode ?? "").ToLowerInvariant().Contains(search)
+                         || (c.ContactNumber ?? "").ToLowerInvariant().Contains(search)
                          || (c.EmailAddress ?? "").ToLowerInvariant().Contains(search))
                 .ToList();
 
@@ -186,7 +193,7 @@ namespace CRM_MusicStudioReservation.Forms.Customers
             var companyId = _auth.CurrentUser?.CompanyId ?? 1;
 
             using var dialog = new CustomerEditForm(_customerService, companyId, null);
-            dialog.ShowDialog(this);
+            dialog.ShowDialog(this.FindForm() ?? this);
 
             if (dialog.SavedSuccessfully)
                 await LoadCustomersAsync();
@@ -224,7 +231,7 @@ namespace CRM_MusicStudioReservation.Forms.Customers
             {
                 var companyId = _auth.CurrentUser?.CompanyId ?? 1;
                 using var dialog = new CustomerEditForm(_customerService, companyId, customer);
-                dialog.ShowDialog(this);
+                dialog.ShowDialog(this.FindForm() ?? this);
 
                 if (dialog.SavedSuccessfully)
                     await LoadCustomersAsync();

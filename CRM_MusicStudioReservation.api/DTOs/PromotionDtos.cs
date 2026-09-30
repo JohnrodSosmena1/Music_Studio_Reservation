@@ -6,10 +6,6 @@ namespace CRM_MusicStudioReservation.api.DTOs
     public class PromotionCreateDto
     {
         [Required]
-        [StringLength(50)]
-        public string PromotionCode { get; set; } = null!;
-
-        [Required]
         [StringLength(100)]
         public string PromotionName { get; set; } = null!;
 

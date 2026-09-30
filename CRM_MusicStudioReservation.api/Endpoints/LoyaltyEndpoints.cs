@@ -16,7 +16,7 @@ namespace CRM_MusicStudioReservation.api.Endpoints
     {
         public static void MapLoyaltyEndpoints(this WebApplication app)
         {
-            var group = app.MapGroup("/tenant/{companyId:int}/loyalty-transactions");
+            var group = app.MapGroup("/tenant/{companyId:int}/loyalty-transactions").RequireAuthorization();
 
             // ==================== LIST ====================
             group.MapGet("", async (int companyId, ITenantDbContextFactory tenantFactory, int page = 1, int pageSize = 20) =>

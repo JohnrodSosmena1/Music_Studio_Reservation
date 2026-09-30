@@ -16,7 +16,7 @@ namespace CRM_MusicStudioReservation.api.Endpoints
     {
         public static void MapStudioServiceEndpoints(this WebApplication app)
         {
-            var group = app.MapGroup("/tenant/{companyId:int}/studio-services");
+            var group = app.MapGroup("/tenant/{companyId:int}/studio-services").RequireAuthorization();
 
             group.MapGet("", async (int companyId, ITenantDbContextFactory tenantFactory, int page = 1, int pageSize = 20, string? search = null) =>
             {

@@ -1,4 +1,4 @@
-﻿using CRM_MusicStudioReservation.api.DTOs;
+using CRM_MusicStudioReservation.api.DTOs;
 using CRM_MusicStudioReservation.domain.entities;
 
 namespace CRM_MusicStudioReservation.api.Extensions
@@ -18,9 +18,9 @@ namespace CRM_MusicStudioReservation.api.Extensions
             CreatedAt = entity.CreatedAt
         };
 
-        public static Promotion ToEntity(this PromotionCreateDto dto) => new()
+        public static Promotion ToEntity(this PromotionCreateDto dto, string? promotionCode = null) => new()
         {
-            PromotionCode = dto.PromotionCode,
+            PromotionCode = promotionCode ?? string.Empty,
             PromotionName = dto.PromotionName,
             Description = dto.Description,
             DiscountPercent = dto.DiscountPercent,

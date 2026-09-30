@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System;
 using System.Text.Json.Serialization;
 
 namespace CRM.winforms.DTOs
@@ -12,6 +10,12 @@ namespace CRM.winforms.DTOs
 
         [JsonPropertyName("customerCode")]
         public string CustomerCode { get; set; } = string.Empty;
+
+        [JsonPropertyName("firstName")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [JsonPropertyName("lastName")]
+        public string LastName { get; set; } = string.Empty;
 
         [JsonPropertyName("customerName")]
         public string CustomerName { get; set; } = string.Empty;
@@ -34,11 +38,11 @@ namespace CRM.winforms.DTOs
 
     public class CustomerCreateRequest
     {
-        [JsonPropertyName("customerCode")]
-        public string CustomerCode { get; set; } = string.Empty;
+        [JsonPropertyName("firstName")]
+        public string FirstName { get; set; } = string.Empty;
 
-        [JsonPropertyName("customerName")]
-        public string CustomerName { get; set; } = string.Empty;
+        [JsonPropertyName("lastName")]
+        public string LastName { get; set; } = string.Empty;
 
         [JsonPropertyName("contactNumber")]
         public string? ContactNumber { get; set; }
@@ -55,11 +59,11 @@ namespace CRM.winforms.DTOs
 
     public class CustomerUpdateRequest
     {
-        [JsonPropertyName("customerCode")]
-        public string? CustomerCode { get; set; }
+        [JsonPropertyName("firstName")]
+        public string? FirstName { get; set; }
 
-        [JsonPropertyName("customerName")]
-        public string? CustomerName { get; set; }
+        [JsonPropertyName("lastName")]
+        public string? LastName { get; set; }
 
         [JsonPropertyName("contactNumber")]
         public string? ContactNumber { get; set; }

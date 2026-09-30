@@ -1,4 +1,4 @@
-﻿using CRM.winforms.DTOs;
+using CRM.winforms.DTOs;
 using CRM.winforms.Services;
 using System;
 using System.Collections.Generic;
@@ -50,7 +50,6 @@ namespace CRM_MusicStudioReservation.Forms.Studios
             foreach (var s in studios)
             {
                 var statusText = s.IsActive ? "Active" : "Inactive";
-                var actionLabel = s.IsActive ? "Edit / Disable" : "Edit / Enable";
                 var typeName = GetTypeName(s.StudioType);
 
                 var idx = dgvStudios.Rows.Add(
@@ -61,7 +60,7 @@ namespace CRM_MusicStudioReservation.Forms.Studios
                     $"₱{s.HourlyRate:N2}",
                     s.Capacity,
                     statusText,
-                    actionLabel
+                    "⋯ Actions"
                 );
 
                 var statusCell = dgvStudios.Rows[idx].Cells[colStatus.Index];
@@ -113,7 +112,7 @@ namespace CRM_MusicStudioReservation.Forms.Studios
             var companyId = _auth.CurrentUser?.CompanyId ?? 1;
 
             using var dialog = new StudioEditForm(_studioService, companyId, null);
-            dialog.ShowDialog(this);
+            dialog.ShowDialog(this.FindForm() ?? this);
 
             if (dialog.SavedSuccessfully)
                 await LoadStudiosAsync();
@@ -121,12 +120,33 @@ namespace CRM_MusicStudioReservation.Forms.Studios
 
         private async void btnRefresh_Click(object sender, EventArgs e)
         {
-            await LoadStudiosAsync();
+            try
+            {
+                btnRefresh.Enabled = false;
+                btnRefresh.Text = "↻";
+                await LoadStudiosAsync();
+            }
+            finally
+            {
+                btnRefresh.Enabled = true;
+            }
         }
 
-        // ==================== ROW ACTIONS ====================
+        // ==================== ROW ACTIONS & INTERACTIONS ====================
 
-        private async void dgvStudios_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void dgvStudios_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+            var studioId = (int)(dgvStudios.Rows[e.RowIndex].Tag ?? 0);
+            var studio = _allStudios.FirstOrDefault(s => s.StudioId == studioId);
+            if (studio == null) return;
+
+            var companyId = _auth.CurrentUser?.CompanyId ?? 1;
+            using var detailsDialog = new StudioDetailsForm(_studioService, companyId, studio);
+            detailsDialog.ShowDialog(this.FindForm() ?? this);
+        }
+
+        private void dgvStudios_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || e.ColumnIndex != colActions.Index) return;
 
@@ -136,56 +156,96 @@ namespace CRM_MusicStudioReservation.Forms.Studios
             var studio = _allStudios.FirstOrDefault(s => s.StudioId == studioId);
             if (studio == null) return;
 
-            var action = studio.IsActive ? "Disable" : "Enable";
+            var companyId = _auth.CurrentUser?.CompanyId ?? 1;
 
-            var choice = MessageBox.Show(
-                $"Studio: {studio.StudioName}\n\n" +
-                $"Yes = Edit\n" +
-                $"No = {action}\n" +
-                $"Cancel = Do nothing",
-                "Choose Action",
-                MessageBoxButtons.YesNoCancel,
-                MessageBoxIcon.Question);
+            var menu = new ContextMenuStrip();
 
-            if (choice == DialogResult.Yes)
+            // 1. View Equipment & Details
+            var itemView = new ToolStripMenuItem("👁  View Equipment & Details");
+            itemView.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            itemView.Click += (s, args) =>
             {
-                // EDIT
-                var companyId = _auth.CurrentUser?.CompanyId ?? 1;
-                using var dialog = new StudioEditForm(_studioService, companyId, studio);
-                dialog.ShowDialog(this);
+                using var details = new StudioDetailsForm(_studioService, companyId, studio);
+                details.ShowDialog(this.FindForm() ?? this);
+            };
+            menu.Items.Add(itemView);
 
+            // 2. Edit Studio
+            var itemEdit = new ToolStripMenuItem("✏  Edit Studio");
+            itemEdit.Click += async (s, args) =>
+            {
+                using var dialog = new StudioEditForm(_studioService, companyId, studio);
+                dialog.ShowDialog(this.FindForm() ?? this);
                 if (dialog.SavedSuccessfully)
                     await LoadStudiosAsync();
-            }
-            else if (choice == DialogResult.No)
+            };
+            menu.Items.Add(itemEdit);
+
+            // 3. Toggle Enable / Disable
+            var toggleLabel = studio.IsActive ? "⊘  Disable Studio" : "✓  Enable Studio";
+            var itemToggle = new ToolStripMenuItem(toggleLabel);
+            itemToggle.Click += async (s, args) =>
             {
-                // TOGGLE ACTIVE
                 var newStatus = !studio.IsActive;
+                var actionVerb = newStatus ? "enable" : "disable";
 
                 var confirm = MessageBox.Show(
-                    $"Are you sure you want to {(newStatus ? "enable" : "disable")} '{studio.StudioName}'?",
-                    $"Confirm {action}",
+                    $"Are you sure you want to {actionVerb} '{studio.StudioName}' ({studio.StudioCode})?",
+                    $"Confirm {(newStatus ? "Enable" : "Disable")}",
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Question);
 
                 if (confirm != DialogResult.Yes) return;
 
-                var companyId = _auth.CurrentUser?.CompanyId ?? 1;
                 var updateReq = new StudioUpdateRequest { IsActive = newStatus };
                 var result = await _studioService.UpdateAsync(companyId, studioId, updateReq);
 
                 if (result != null)
                 {
-                    MessageBox.Show($"Studio {action.ToLower()}d successfully.",
+                    MessageBox.Show($"Studio {actionVerb}d successfully.",
                         "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     await LoadStudiosAsync();
                 }
                 else
                 {
-                    MessageBox.Show($"Failed to {action.ToLower()} studio.",
+                    MessageBox.Show($"Failed to {actionVerb} studio.",
                         "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-            }
+            };
+            menu.Items.Add(itemToggle);
+
+            menu.Items.Add(new ToolStripSeparator());
+
+            // 4. Delete / Archive
+            var itemDelete = new ToolStripMenuItem("🗑  Delete Studio");
+            itemDelete.ForeColor = Color.FromArgb(239, 68, 68);
+            itemDelete.Click += async (s, args) =>
+            {
+                var confirm = MessageBox.Show(
+                    $"Delete studio '{studio.StudioName}' ({studio.StudioCode})?\n\nIf the studio has past bookings, it will be deactivated instead of deleted.",
+                    "Confirm Delete",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                if (confirm != DialogResult.Yes) return;
+
+                var success = await _studioService.DeleteAsync(companyId, studioId);
+                if (success)
+                {
+                    MessageBox.Show("Studio deleted/archived successfully.",
+                        "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    await LoadStudiosAsync();
+                }
+                else
+                {
+                    MessageBox.Show("Failed to delete studio. It may be referenced by active bookings.",
+                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            };
+            menu.Items.Add(itemDelete);
+
+            var cellRect = dgvStudios.GetCellDisplayRectangle(e.ColumnIndex, e.RowIndex, false);
+            menu.Show(dgvStudios, cellRect.Left, cellRect.Bottom);
         }
     }
 }

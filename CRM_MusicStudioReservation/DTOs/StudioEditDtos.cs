@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -9,7 +9,7 @@ namespace CRM.winforms.DTOs
     public class StudioCreateRequest
     {
         [JsonPropertyName("studioCode")]
-        public string StudioCode { get; set; } = string.Empty;
+        public string? StudioCode { get; set; }
 
         [JsonPropertyName("studioName")]
         public string StudioName { get; set; } = string.Empty;

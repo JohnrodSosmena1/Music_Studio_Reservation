@@ -1,4 +1,4 @@
-﻿namespace CRM_MusicStudioReservation.Forms.Studios
+namespace CRM_MusicStudioReservation.Forms.Studios
 {
     partial class StudioManagementForm
     {
@@ -140,6 +140,7 @@
             this.dgvStudios.GridColor = System.Drawing.Color.FromArgb(229, 231, 235);
             this.dgvStudios.Name = "dgvStudios";
             this.dgvStudios.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvStudios_CellContentClick);
+            this.dgvStudios.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvStudios_CellDoubleClick);
 
             // ==== Columns ====
             this.colId.HeaderText = "ID";
@@ -171,8 +172,12 @@
             this.colStatus.Name = "colStatus";
 
             this.colActions.HeaderText = "Actions";
-            this.colActions.FillWeight = 100;
+            this.colActions.FillWeight = 90;
             this.colActions.Name = "colActions";
+            this.colActions.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.colActions.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(139, 92, 246);
+            this.colActions.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(139, 92, 246);
+            this.colActions.DefaultCellStyle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
 
             this.dgvStudios.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
                 this.colId,

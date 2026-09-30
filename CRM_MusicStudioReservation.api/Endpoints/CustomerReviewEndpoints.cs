@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -16,7 +16,7 @@ namespace CRM_MusicStudioReservation.api.Endpoints
     {
         public static void MapCustomerReviewEndpoints(this WebApplication app)
         {
-            var group = app.MapGroup("/tenant/{companyId:int}/customer-reviews");
+            var group = app.MapGroup("/tenant/{companyId:int}/customer-reviews").RequireAuthorization();
 
             // ==================== LIST ====================
             group.MapGet("", async (

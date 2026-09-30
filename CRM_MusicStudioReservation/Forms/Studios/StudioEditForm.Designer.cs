@@ -1,4 +1,4 @@
-﻿namespace CRM_MusicStudioReservation.Forms.Studios
+namespace CRM_MusicStudioReservation.Forms.Studios
 {
     partial class StudioEditForm
     {
@@ -39,18 +39,21 @@
 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(500, 620);
+            this.ClientSize = new System.Drawing.Size(540, 530);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.BackColor = System.Drawing.Color.White;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
+            this.KeyPreview = true;
+            this.AcceptButton = this.btnSave;
+            this.CancelButton = this.btnCancel;
             this.Name = "StudioEditForm";
             this.Text = "Studio";
 
             // lblTitle
             this.lblTitle.AutoSize = false;
-            this.lblTitle.Size = new System.Drawing.Size(440, 35);
+            this.lblTitle.Size = new System.Drawing.Size(480, 35);
             this.lblTitle.Location = new System.Drawing.Point(30, 20);
             this.lblTitle.Text = "Add Studio";
             this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold);
@@ -60,16 +63,19 @@
             // lblCode
             this.lblCode.AutoSize = true;
             this.lblCode.Location = new System.Drawing.Point(30, 75);
-            this.lblCode.Text = "Studio Code *";
+            this.lblCode.Text = "Studio Code (System Generated)";
             this.lblCode.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblCode.ForeColor = System.Drawing.Color.FromArgb(55, 65, 81);
+            this.lblCode.ForeColor = System.Drawing.Color.FromArgb(107, 114, 128);
             this.lblCode.Name = "lblCode";
 
             // txtCode
             this.txtCode.Location = new System.Drawing.Point(30, 95);
-            this.txtCode.Size = new System.Drawing.Size(440, 28);
+            this.txtCode.Size = new System.Drawing.Size(480, 28);
             this.txtCode.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.txtCode.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.txtCode.ReadOnly = true;
+            this.txtCode.BackColor = System.Drawing.Color.FromArgb(243, 244, 246);
+            this.txtCode.ForeColor = System.Drawing.Color.FromArgb(107, 114, 128);
             this.txtCode.Name = "txtCode";
 
             // lblName
@@ -82,7 +88,7 @@
 
             // txtName
             this.txtName.Location = new System.Drawing.Point(30, 155);
-            this.txtName.Size = new System.Drawing.Size(440, 28);
+            this.txtName.Size = new System.Drawing.Size(480, 28);
             this.txtName.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.txtName.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtName.Name = "txtName";
@@ -97,7 +103,7 @@
 
             // cmbType
             this.cmbType.Location = new System.Drawing.Point(30, 215);
-            this.cmbType.Size = new System.Drawing.Size(440, 28);
+            this.cmbType.Size = new System.Drawing.Size(480, 28);
             this.cmbType.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.cmbType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbType.Name = "cmbType";
@@ -112,7 +118,7 @@
 
             // numRate
             this.numRate.Location = new System.Drawing.Point(30, 275);
-            this.numRate.Size = new System.Drawing.Size(210, 28);
+            this.numRate.Size = new System.Drawing.Size(230, 28);
             this.numRate.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.numRate.DecimalPlaces = 2;
             this.numRate.Maximum = 100000;
@@ -120,15 +126,15 @@
 
             // lblCapacity
             this.lblCapacity.AutoSize = true;
-            this.lblCapacity.Location = new System.Drawing.Point(260, 255);
+            this.lblCapacity.Location = new System.Drawing.Point(280, 255);
             this.lblCapacity.Text = "Capacity *";
             this.lblCapacity.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.lblCapacity.ForeColor = System.Drawing.Color.FromArgb(55, 65, 81);
             this.lblCapacity.Name = "lblCapacity";
 
             // numCapacity
-            this.numCapacity.Location = new System.Drawing.Point(260, 275);
-            this.numCapacity.Size = new System.Drawing.Size(210, 28);
+            this.numCapacity.Location = new System.Drawing.Point(280, 275);
+            this.numCapacity.Size = new System.Drawing.Size(230, 28);
             this.numCapacity.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.numCapacity.Maximum = 1000;
             this.numCapacity.Value = 8;
@@ -144,7 +150,7 @@
 
             // txtDescription
             this.txtDescription.Location = new System.Drawing.Point(30, 335);
-            this.txtDescription.Size = new System.Drawing.Size(440, 60);
+            this.txtDescription.Size = new System.Drawing.Size(480, 60);
             this.txtDescription.Multiline = true;
             this.txtDescription.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.txtDescription.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -161,7 +167,7 @@
 
             // lblError
             this.lblError.AutoSize = false;
-            this.lblError.Size = new System.Drawing.Size(440, 25);
+            this.lblError.Size = new System.Drawing.Size(480, 25);
             this.lblError.Location = new System.Drawing.Point(30, 435);
             this.lblError.Text = "";
             this.lblError.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
@@ -170,28 +176,28 @@
             this.lblError.Visible = false;
 
             // btnCancel
-            this.btnCancel.Size = new System.Drawing.Size(120, 40);
-            this.btnCancel.Location = new System.Drawing.Point(30, 555);
+            this.btnCancel.Size = new System.Drawing.Size(110, 38);
+            this.btnCancel.Location = new System.Drawing.Point(280, 470);
             this.btnCancel.Text = "Cancel";
             this.btnCancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCancel.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(229, 231, 235);
             this.btnCancel.FlatAppearance.BorderSize = 1;
             this.btnCancel.BackColor = System.Drawing.Color.White;
             this.btnCancel.ForeColor = System.Drawing.Color.FromArgb(55, 65, 81);
-            this.btnCancel.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.btnCancel.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
             this.btnCancel.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
 
             // btnSave
-            this.btnSave.Size = new System.Drawing.Size(120, 40);
-            this.btnSave.Location = new System.Drawing.Point(350, 555);
+            this.btnSave.Size = new System.Drawing.Size(110, 38);
+            this.btnSave.Location = new System.Drawing.Point(400, 470);
             this.btnSave.Text = "Save";
             this.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnSave.FlatAppearance.BorderSize = 0;
             this.btnSave.BackColor = System.Drawing.Color.FromArgb(139, 92, 246);
             this.btnSave.ForeColor = System.Drawing.Color.White;
-            this.btnSave.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.btnSave.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
             this.btnSave.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnSave.Name = "btnSave";
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);

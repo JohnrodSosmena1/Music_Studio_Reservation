@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.Json.Serialization;
 
 namespace CRM.winforms.DTOs
@@ -60,6 +60,15 @@ namespace CRM.winforms.DTOs
         [JsonPropertyName("location")]
         public string? Location { get; set; }
 
+        [JsonPropertyName("studioId")]
+        public int? StudioId { get; set; }
+
+        [JsonPropertyName("studioName")]
+        public string? StudioName { get; set; }
+
+        [JsonPropertyName("studioCode")]
+        public string? StudioCode { get; set; }
+
         // -------- Helpers (not serialized) --------
         [JsonIgnore]
         public bool IsLowStock => QuantityOnHand <= ReorderLevel;
@@ -71,13 +80,16 @@ namespace CRM.winforms.DTOs
     public class InventoryItemCreateRequest
     {
         [JsonPropertyName("itemCode")]
-        public string ItemCode { get; set; } = string.Empty;
+        public string? ItemCode { get; set; }
 
         [JsonPropertyName("itemName")]
         public string ItemName { get; set; } = string.Empty;
 
         [JsonPropertyName("inventoryCategoryId")]
         public int InventoryCategoryId { get; set; }
+
+        [JsonPropertyName("studioId")]
+        public int? StudioId { get; set; }
 
         [JsonPropertyName("quantityOnHand")]
         public int QuantityOnHand { get; set; }
@@ -108,6 +120,9 @@ namespace CRM.winforms.DTOs
 
         [JsonPropertyName("inventoryCategoryId")]
         public int? InventoryCategoryId { get; set; }
+
+        [JsonPropertyName("studioId")]
+        public int? StudioId { get; set; }
 
         [JsonPropertyName("quantityOnHand")]
         public int? QuantityOnHand { get; set; }

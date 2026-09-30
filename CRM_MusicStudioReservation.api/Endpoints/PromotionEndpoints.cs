@@ -16,7 +16,7 @@ namespace CRM_MusicStudioReservation.api.Endpoints
     {
         public static void MapPromotionEndpoints(this WebApplication app)
         {
-            var group = app.MapGroup("/tenant/{companyId:int}/promotions");
+            var group = app.MapGroup("/tenant/{companyId:int}/promotions").RequireAuthorization();
 
             // GET /promotions - List all active promotions
             group.MapGet("", async (int companyId, ITenantDbContextFactory tenantFactory, int page = 1, int pageSize = 20, string? search = null) =>
@@ -98,9 +98,12 @@ namespace CRM_MusicStudioReservation.api.Endpoints
 
                 await using var db = await tenantFactory.CreateAsync(companyId);
 
+                var promoCount = await db.Promotions.CountAsync();
+                var autoCode = $"PROMO-{(promoCount + 1):D5}";
+
                 var promotion = new Promotion
                 {
-                    PromotionCode = createDto.PromotionCode,
+                    PromotionCode = autoCode,
                     PromotionName = createDto.PromotionName,
                     Description = createDto.Description,
                     DiscountPercent = createDto.DiscountPercent,

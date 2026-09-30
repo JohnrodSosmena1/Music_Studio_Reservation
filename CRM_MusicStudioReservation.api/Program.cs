@@ -75,14 +75,11 @@ builder.Services.AddAuthentication(options =>
     {
         OnAuthenticationFailed = context =>
         {
-            Console.WriteLine("=== JWT AUTH FAILED ===");
-            Console.WriteLine($"Exception: {context.Exception.GetType().Name}");
-            Console.WriteLine($"Message: {context.Exception.Message}");
-            if (context.Exception.InnerException != null)
-            {
-                Console.WriteLine($"Inner: {context.Exception.InnerException.Message}");
-            }
-            Console.WriteLine("=======================");
+            var logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILogger<Program>>();
+            logger.LogWarning("JWT auth failed: {ExceptionType} — {Message}",
+                context.Exception.GetType().Name,
+                context.Exception.Message);
             return Task.CompletedTask;
         }
     };
@@ -118,21 +115,23 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    // TODO: Re-enable when on a network that allows port 1433
-    //var migrator = scope.ServiceProvider.GetService<ITenantMigrationService>();
-    //if (migrator != null)
-    //{
-    //    await migrator.ApplyMigrationsAsync();
-    //}
-    //var seeder = scope.ServiceProvider.GetService<DataSeeder>();
-    //if (seeder != null)
-    //{
-    //    var masterDb = scope.ServiceProvider.GetService<MasterCRMDbContext>();
-    //    if (masterDb != null)
-    //    {
-    //        await seeder.SeedAllCompaniesAsync(masterDb);
-    //    }
-    //}
+    try
+    {
+        var seeder = scope.ServiceProvider.GetService<DataSeeder>();
+        if (seeder != null)
+        {
+            var masterDb = scope.ServiceProvider.GetService<MasterCRMDbContext>();
+            if (masterDb != null)
+            {
+                await seeder.SeedAllCompaniesAsync(masterDb);
+                Console.WriteLine("[Startup] ✓ Initial tenant company data & customers seeded.");
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Startup] ⚠ Seeder notice: {ex.Message}");
+    }
 }
 
 // Configure the HTTP request pipeline.
@@ -162,6 +161,8 @@ app.MapAuthEndpoints();
 app.MapCustomerEndpoints();
 app.MapReportEndpoints();
 app.MapCustomerInquiryEndpoints();
+app.MapTandCEndpoints();
+app.MapPromotionRationaleEndpoints();
 
 // ==================== Legacy inline endpoints ====================
 app.MapPost("/companies", async (
@@ -171,7 +172,7 @@ app.MapPost("/companies", async (
     db.Companies.Add(company);
     await db.SaveChangesAsync();
     return Results.Created($"/companies/{company.CompanyId}", company);
-});
+}).RequireAuthorization(p => p.RequireRole("SuperAdmin"));
 
 app.MapPost("/devices", async (
     Device device,
@@ -180,7 +181,7 @@ app.MapPost("/devices", async (
     db.Devices.Add(device);
     await db.SaveChangesAsync();
     return Results.Created($"/devices/{device.DeviceId}", device);
-});
+}).RequireAuthorization(p => p.RequireRole("SuperAdmin"));
 
 app.MapPost("/company-databases", async (
     CompanyDatabase companyDatabase,
@@ -191,7 +192,7 @@ app.MapPost("/company-databases", async (
     return Results.Created(
         $"/company-databases/{companyDatabase.CompanyDatabaseId}",
         companyDatabase);
-});
+}).RequireAuthorization(p => p.RequireRole("SuperAdmin"));
 
 app.MapGet("/test-tenant/{companyId:int}", async (
     int companyId,
@@ -200,7 +201,7 @@ app.MapGet("/test-tenant/{companyId:int}", async (
     await using var tenantDb = await tenantFactory.CreateAsync(companyId);
     var productCount = await tenantDb.Products.CountAsync();
     return Results.Ok(new { companyId, productCount });
-});
+}).RequireAuthorization(p => p.RequireRole("SuperAdmin"));
 
 app.MapPost("/tenant/{companyId:int}/products", async (
     int companyId,
@@ -208,10 +209,15 @@ app.MapPost("/tenant/{companyId:int}/products", async (
     ITenantDbContextFactory tenantFactory) =>
 {
     await using var tenantDb = await tenantFactory.CreateAsync(companyId);
+    if (string.IsNullOrWhiteSpace(product.ProductCode))
+    {
+        var count = await tenantDb.Products.CountAsync();
+        product.ProductCode = $"PROD-{(count + 1):D5}";
+    }
     tenantDb.Products.Add(product);
     await tenantDb.SaveChangesAsync();
     return Results.Created($"/tenant/{companyId}/products/{product.ProductId}", product);
-});
+}).RequireAuthorization(p => p.RequireRole("SuperAdmin"));
 
 app.MapGet("/tenant/{companyId:int}/products", async (
     int companyId,
@@ -220,27 +226,7 @@ app.MapGet("/tenant/{companyId:int}/products", async (
     await using var tenantDb = await tenantFactory.CreateAsync(companyId);
     var products = await tenantDb.Products.AsNoTracking().OrderBy(x => x.ProductId).ToListAsync();
     return Results.Ok(products);
-});
-
-app.MapPost("/tenant/{companyId:int}/customers", async (
-    int companyId,
-    Customer customer,
-    ITenantDbContextFactory tenantFactory) =>
-{
-    await using var tenantDb = await tenantFactory.CreateAsync(companyId);
-    tenantDb.Customers.Add(customer);
-    await tenantDb.SaveChangesAsync();
-    return Results.Created($"/tenant/{companyId}/customers/{customer.CustomerId}", customer);
-});
-
-app.MapGet("/tenant/{companyId:int}/customers", async (
-    int companyId,
-    ITenantDbContextFactory tenantFactory) =>
-{
-    await using var tenantDb = await tenantFactory.CreateAsync(companyId);
-    var customers = await tenantDb.Customers.AsNoTracking().OrderBy(x => x.CustomerId).ToListAsync();
-    return Results.Ok(customers);
-});
+}).RequireAuthorization(p => p.RequireRole("SuperAdmin"));
 
 app.MapPost("/tenant/{companyId:int}/suppliers", async (
     int companyId,
@@ -248,10 +234,15 @@ app.MapPost("/tenant/{companyId:int}/suppliers", async (
     ITenantDbContextFactory tenantFactory) =>
 {
     await using var tenantDb = await tenantFactory.CreateAsync(companyId);
+    if (string.IsNullOrWhiteSpace(supplier.SupplierCode))
+    {
+        var supCount = await tenantDb.Suppliers.CountAsync();
+        supplier.SupplierCode = $"SUPP-{(supCount + 1):D5}";
+    }
     tenantDb.Suppliers.Add(supplier);
     await tenantDb.SaveChangesAsync();
     return Results.Created($"/tenant/{companyId}/suppliers/{supplier.SupplierId}", supplier);
-});
+}).RequireAuthorization(p => p.RequireRole("SuperAdmin"));
 
 app.MapGet("/tenant/{companyId:int}/suppliers", async (
     int companyId,
@@ -260,7 +251,7 @@ app.MapGet("/tenant/{companyId:int}/suppliers", async (
     await using var tenantDb = await tenantFactory.CreateAsync(companyId);
     var suppliers = await tenantDb.Suppliers.AsNoTracking().OrderBy(x => x.SupplierId).ToListAsync();
     return Results.Ok(suppliers);
-});
+}).RequireAuthorization(p => p.RequireRole("SuperAdmin"));
 
 
-app.Run();
+app.Run();

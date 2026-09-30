@@ -28,9 +28,8 @@ namespace CRM_MusicStudioReservation.api.DTOs
 
     public class InventoryItemCreateDto
     {
-        [Required]
         [StringLength(50)]
-        public string ItemCode { get; set; } = null!;
+        public string? ItemCode { get; set; }
 
         [Required]
         [StringLength(200)]
@@ -38,6 +37,8 @@ namespace CRM_MusicStudioReservation.api.DTOs
 
         [Required]
         public int InventoryCategoryId { get; set; }
+
+        public int? StudioId { get; set; }
 
         [Range(0, int.MaxValue)]
         public int QuantityOnHand { get; set; }
@@ -68,6 +69,7 @@ namespace CRM_MusicStudioReservation.api.DTOs
         public string? ItemName { get; set; }
 
         public int? InventoryCategoryId { get; set; }
+        public int? StudioId { get; set; }
         public int? QuantityOnHand { get; set; }
         public int? ReorderLevel { get; set; }
         public decimal? UnitCost { get; set; }
@@ -91,11 +93,15 @@ namespace CRM_MusicStudioReservation.api.DTOs
         public string ItemName { get; set; } = null!;
         public int InventoryCategoryId { get; set; }
         public string? CategoryName { get; set; }        // 👈 NEW — populated in response for convenience
+        public int? StudioId { get; set; }
+        public string? StudioName { get; set; }
+        public string? StudioCode { get; set; }
         public int QuantityOnHand { get; set; }
         public int ReorderLevel { get; set; }
         public decimal UnitCost { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
 
         // 👇 NEW
         public string Condition { get; set; } = "Good";

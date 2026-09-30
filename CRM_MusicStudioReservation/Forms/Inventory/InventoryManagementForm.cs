@@ -1,4 +1,4 @@
-﻿using CRM.winforms.DTOs;
+using CRM.winforms.DTOs;
 using CRM.winforms.Services;
 using System;
 using System.Collections.Generic;
@@ -182,6 +182,10 @@ namespace CRM.winforms.Forms.Inventory
 
             foreach (var i in items)
             {
+                var locationDisplay = !string.IsNullOrWhiteSpace(i.StudioName)
+                    ? i.StudioName
+                    : (!string.IsNullOrWhiteSpace(i.Location) ? i.Location : "—");
+
                 var idx = dgvItems.Rows.Add(
                     i.InventoryItemId,
                     i.ItemCode,
@@ -190,7 +194,7 @@ namespace CRM.winforms.Forms.Inventory
                     i.QuantityOnHand,
                     i.Condition,
                     i.Availability,
-                    i.Location ?? "—",
+                    locationDisplay,
                     $"₱{i.UnitCost:N2}",
                     $"₱{i.TotalValue:N2}",
                     "⋯ Actions"
@@ -245,7 +249,7 @@ namespace CRM.winforms.Forms.Inventory
             if (this.IsDisposed) return;
 
             var dialog = new InventoryItemEditForm(_auth, _api, _categories, null);
-            if (dialog.ShowDialog() == DialogResult.OK)
+            if (dialog.ShowDialog(this.FindForm() ?? this) == DialogResult.OK)
             {
                 if (this.IsDisposed || dgvItems.IsDisposed) return;
                 await LoadItemsAsync();
@@ -255,7 +259,41 @@ namespace CRM.winforms.Forms.Inventory
         private async void btnRefresh_Click(object sender, EventArgs e)
         {
             if (this.IsDisposed) return;
-            await LoadItemsAsync();
+            try
+            {
+                btnRefresh.Enabled = false;
+                btnRefresh.Text = "↻ Refreshing...";
+                await LoadCategoriesAsync();
+                await LoadItemsAsync();
+
+                if (!this.IsDisposed)
+                {
+                    MessageBox.Show(
+                        $"Inventory refreshed successfully.\n{_allItems.Count} item(s) currently registered.",
+                        "Refreshed",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (!this.IsDisposed)
+                {
+                    MessageBox.Show(
+                        $"Failed to refresh inventory: {ex.Message}",
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+            }
+            finally
+            {
+                if (!this.IsDisposed && !btnRefresh.IsDisposed)
+                {
+                    btnRefresh.Enabled = true;
+                    btnRefresh.Text = "↻  Refresh";
+                }
+            }
         }
 
         // ==================== ROW ACTIONS ====================
@@ -290,7 +328,7 @@ namespace CRM.winforms.Forms.Inventory
             {
                 if (this.IsDisposed) return;
                 var dialog = new InventoryItemEditForm(_auth, _api, _categories, item);
-                if (dialog.ShowDialog() == DialogResult.OK)
+                if (dialog.ShowDialog(this.FindForm() ?? this) == DialogResult.OK)
                 {
                     if (this.IsDisposed || dgvItems.IsDisposed) return;
                     await LoadItemsAsync();
@@ -300,7 +338,7 @@ namespace CRM.winforms.Forms.Inventory
             {
                 if (this.IsDisposed) return;
                 var dialog = new StockAdjustmentForm(_auth, _api, item);
-                if (dialog.ShowDialog() == DialogResult.OK)
+                if (dialog.ShowDialog(this.FindForm() ?? this) == DialogResult.OK)
                 {
                     if (this.IsDisposed || dgvItems.IsDisposed) return;
                     await LoadItemsAsync();
