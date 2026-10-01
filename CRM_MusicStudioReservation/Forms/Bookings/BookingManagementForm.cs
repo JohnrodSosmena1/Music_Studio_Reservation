@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -40,24 +40,40 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
         private void EnsureGridColumns()
         {
             if (dgvBookings == null || dgvBookings.IsDisposed) return;
-            if (dgvBookings.Columns.Count > 0) return;
+            if (dgvBookings.Columns.Count > 0)
+            {
+                dgvBookings.ReadOnly = true;
+                dgvBookings.EditMode = DataGridViewEditMode.EditProgrammatically;
+                dgvBookings.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(249, 250, 251);
+                dgvBookings.ColumnHeadersDefaultCellStyle.SelectionForeColor = Color.FromArgb(107, 114, 128);
+                foreach (DataGridViewColumn col in dgvBookings.Columns)
+                {
+                    col.SortMode = DataGridViewColumnSortMode.NotSortable;
+                }
+                return;
+            }
 
             dgvBookings.Columns.Clear();
+            dgvBookings.ReadOnly = true;
+            dgvBookings.EditMode = DataGridViewEditMode.EditProgrammatically;
+            dgvBookings.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(249, 250, 251);
+            dgvBookings.ColumnHeadersDefaultCellStyle.SelectionForeColor = Color.FromArgb(107, 114, 128);
 
-            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colId", HeaderText = "ID", FillWeight = 30 });
-            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colCode", HeaderText = "Code", FillWeight = 80 });
-            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colCustomer", HeaderText = "Client Name", FillWeight = 90 });
-            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colStudio", HeaderText = "Studio", FillWeight = 65 });
-            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colStart", HeaderText = "Start", FillWeight = 100 });
-            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colAmount", HeaderText = "Amount", FillWeight = 60 });
-            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colStatus", HeaderText = "Status", FillWeight = 70 });
+            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colId", HeaderText = "ID", FillWeight = 30, SortMode = DataGridViewColumnSortMode.NotSortable });
+            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colCode", HeaderText = "Code", FillWeight = 80, SortMode = DataGridViewColumnSortMode.NotSortable });
+            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colCustomer", HeaderText = "Client Name", FillWeight = 90, SortMode = DataGridViewColumnSortMode.NotSortable });
+            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colStudio", HeaderText = "Studio", FillWeight = 65, SortMode = DataGridViewColumnSortMode.NotSortable });
+            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colStart", HeaderText = "Start", FillWeight = 100, SortMode = DataGridViewColumnSortMode.NotSortable });
+            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colAmount", HeaderText = "Amount", FillWeight = 60, SortMode = DataGridViewColumnSortMode.NotSortable });
+            dgvBookings.Columns.Add(new DataGridViewTextBoxColumn { Name = "colStatus", HeaderText = "Status", FillWeight = 70, SortMode = DataGridViewColumnSortMode.NotSortable });
 
             var actionsCol = new DataGridViewButtonColumn
             {
                 Name = "colActions",
                 HeaderText = "Actions",
                 FillWeight = 100,
-                FlatStyle = FlatStyle.Flat
+                FlatStyle = FlatStyle.Flat,
+                SortMode = DataGridViewColumnSortMode.NotSortable
             };
             actionsCol.DefaultCellStyle.BackColor = Color.FromArgb(249, 250, 251);
             actionsCol.DefaultCellStyle.ForeColor = Color.FromArgb(139, 92, 246);
@@ -134,7 +150,6 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
 
             cmbStatus.Items.Clear();
             cmbStatus.Items.Add("All Statuses");
-            cmbStatus.Items.Add("Pending");
             cmbStatus.Items.Add("Confirmed");
             cmbStatus.Items.Add("Checked In");
             cmbStatus.Items.Add("Checked Out");
@@ -188,7 +203,10 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
             if (!string.IsNullOrEmpty(search))
                 filtered = filtered.Where(b => (b.BookingCode ?? "").ToLowerInvariant().Contains(search));
 
-            var list = filtered.OrderByDescending(b => b.StartTime).ToList();
+            var list = filtered
+                .OrderBy(b => b.StudioId)
+                .ThenBy(b => b.BookingId)
+                .ToList();
             RenderRows(list);
 
             if (!lblCount.IsDisposed)
@@ -256,12 +274,12 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
                 dgvBookings.Rows[idx].Tag = b.BookingId;
             }
 
+            dgvBookings.ClearSelection();
             TryApplyPreselection();
         }
 
         private static Color GetStatusColor(int status) => status switch
         {
-            BookingStatuses.Pending => Color.FromArgb(245, 158, 11),
             BookingStatuses.Confirmed => Color.FromArgb(16, 185, 129),
             BookingStatuses.CheckedIn => Color.FromArgb(59, 130, 246),
             BookingStatuses.CheckedOut => Color.FromArgb(107, 114, 128),
@@ -283,7 +301,6 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
             if (booking == null) return;
 
             var isStaff = IsStaff();
-            var isPending = booking.BookingStatus == BookingStatuses.Pending;
             var isRescheduled = booking.BookingStatus == BookingStatuses.Rescheduled;
             var isConfirmed = booking.BookingStatus == BookingStatuses.Confirmed;
             var isCheckedIn = booking.BookingStatus == BookingStatuses.CheckedIn;
@@ -292,11 +309,11 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
 
             var menu = new ContextMenuStrip();
 
-            if (isPending || isRescheduled || isConfirmed)
+            if (isRescheduled || isConfirmed)
             {
                 menu.Items.Add("✏  Edit", null, async (s, args) => await OpenEditAsync(booking));
             }
-            if (isPending || isRescheduled)
+            if (isRescheduled)
             {
                 menu.Items.Add("✓  Confirm", null, async (s, args) =>
                     await ChangeStatusAsync(booking, BookingStatuses.Confirmed, "confirm"));
@@ -315,7 +332,7 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
             {
                 menu.Items.Add("👁  View", null, (s, args) => ShowDetails(booking));
             }
-            if (isPending || isRescheduled || isConfirmed)
+            if (isRescheduled || isConfirmed)
             {
                 menu.Items.Add(new ToolStripSeparator());
                 menu.Items.Add("🗑  Delete", null, async (s, args) => await ArchiveBookingAsync(booking));

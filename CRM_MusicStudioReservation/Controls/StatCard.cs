@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Drawing;
 using CRM.winforms.Helpers;
@@ -13,9 +13,21 @@ namespace CRM.winforms.Controls
         public StatCard()
         {
             InitializeComponent();
-            RoundedCorners.Apply(this, AppTheme.CardRadius);
             ApplyCardStyle();
             EnsureTrendLabel();
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (this.Width > 0 && this.Height > 0)
+            {
+                RoundedCorners.Apply(this, AppTheme.CardRadius);
+                if (lblTitle != null) lblTitle.Width = Math.Max(50, this.Width - 75);
+                if (lblValue != null) lblValue.Width = Math.Max(50, this.Width - 32);
+                if (lblSubtext != null) lblSubtext.Width = Math.Max(50, this.Width - 32);
+            }
+            this.Invalidate();
         }
 
         private void ApplyCardStyle()
@@ -23,8 +35,13 @@ namespace CRM.winforms.Controls
             this.BackColor = AppTheme.CardBackground;
             this.Paint += (s, e) =>
             {
-                using var pen = new Pen(AppTheme.Border, 1);
-                e.Graphics.DrawRectangle(pen, 0, 0, this.Width - 1, this.Height - 1);
+                if (this.Width > 2 && this.Height > 2)
+                {
+                    e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                    using var path = RoundedCorners.CreateRoundedPath(new Rectangle(0, 0, this.Width - 1, this.Height - 1), AppTheme.CardRadius);
+                    using var pen = new Pen(AppTheme.Border, 1);
+                    e.Graphics.DrawPath(pen, path);
+                }
             };
         }
 

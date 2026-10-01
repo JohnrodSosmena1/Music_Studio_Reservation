@@ -1,4 +1,4 @@
-﻿using CRM.winforms.DTOs;
+using CRM.winforms.DTOs;
 using CRM.winforms.Helpers;
 using CRM.winforms.Services;
 using System;
@@ -108,21 +108,35 @@ namespace CRM.winforms.Forms.Reports
                 return;
             }
 
-            var report = await _reportService.GetBookingReportAsync(companyId, from, to);
-
-            if (this.IsDisposed) return;
-
-            if (report == null)
+            try
             {
-                MessageBox.Show("Failed to load report. Please try again.", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
+                btnRun.Enabled = false;
+                btnRun.Text = "⏳ Loading...";
 
-            _lastReport = report;
-            BuildStatCards(report);
-            BuildChart(report);
-            BuildTable(report);
+                var report = await _reportService.GetBookingReportAsync(companyId, from, to);
+
+                if (this.IsDisposed) return;
+
+                if (report == null)
+                {
+                    MessageBox.Show("Failed to load report. Please try again.", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                _lastReport = report;
+                BuildStatCards(report);
+                BuildChart(report);
+                BuildTable(report);
+            }
+            finally
+            {
+                if (!this.IsDisposed)
+                {
+                    btnRun.Enabled = true;
+                    btnRun.Text = "▶  Run Report";
+                }
+            }
         }
 
         // ==================== STAT CARDS ====================
@@ -154,14 +168,20 @@ namespace CRM.winforms.Forms.Reports
             var pnl = new Panel
             {
                 BackColor = Color.White,
-                Padding = new Padding(15),
-                Height = 70
+                Padding = new Padding(16, 10, 16, 8),
+                Height = 74
+            };
+
+            pnl.Paint += (s, e) =>
+            {
+                using var pen = new Pen(Color.FromArgb(229, 231, 235), 1);
+                e.Graphics.DrawRectangle(pen, 0, 0, pnl.Width - 1, pnl.Height - 1);
             };
 
             var lblTitle = new Label
             {
                 Text = title,
-                Font = new Font("Segoe UI", 8F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
                 ForeColor = Color.FromArgb(107, 114, 128),
                 AutoSize = false,
                 Dock = DockStyle.Top,
@@ -172,11 +192,12 @@ namespace CRM.winforms.Forms.Reports
             var lblValue = new Label
             {
                 Text = value,
-                Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 16F, FontStyle.Bold),
                 ForeColor = color,
                 AutoSize = false,
                 Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleLeft
+                TextAlign = ContentAlignment.MiddleLeft,
+                AutoEllipsis = true
             };
 
             pnl.Controls.Add(lblValue);
@@ -197,8 +218,9 @@ namespace CRM.winforms.Forms.Reports
             {
                 Docking = Docking.Top,
                 Alignment = StringAlignment.Far,
-                Font = new Font("Segoe UI", 9F),
-                BackColor = Color.Transparent
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                BackColor = Color.Transparent,
+                LegendItemOrder = LegendItemOrder.SameAsSeriesOrder
             };
             chart.Legends.Add(legend);
 
@@ -206,8 +228,8 @@ namespace CRM.winforms.Forms.Reports
             area.BackColor = Color.White;
             area.AxisX.MajorGrid.Enabled = false;
             area.AxisY.MajorGrid.LineColor = Color.FromArgb(240, 240, 240);
-            area.AxisX.LabelStyle.Font = new Font("Segoe UI", 8F);
-            area.AxisY.LabelStyle.Font = new Font("Segoe UI", 8F);
+            area.AxisX.LabelStyle.Font = new Font("Segoe UI", 8.5F);
+            area.AxisY.LabelStyle.Font = new Font("Segoe UI", 8.5F);
             area.AxisX.LineColor = AppTheme.Border;
             area.AxisY.LineColor = AppTheme.Border;
             area.AxisX.Interval = 1;
@@ -217,24 +239,25 @@ namespace CRM.winforms.Forms.Reports
             area.AxisX.IsMarginVisible = true;
             chart.ChartAreas.Add(area);
 
+            // Chart colors matched 100% to KPI cards
             var sCompleted = new Series("Completed")
             {
                 ChartType = SeriesChartType.StackedColumn,
-                Color = AppTheme.Primary,
+                Color = Color.FromArgb(16, 185, 129), // Green (matches Completed KPI)
                 Font = new Font("Segoe UI", 8F),
                 XValueType = ChartValueType.Int32
             };
             var sPending = new Series("Pending")
             {
                 ChartType = SeriesChartType.StackedColumn,
-                Color = AppTheme.Warning,
+                Color = Color.FromArgb(245, 158, 11), // Orange/Amber (matches Pending KPI)
                 Font = new Font("Segoe UI", 8F),
                 XValueType = ChartValueType.Int32
             };
             var sCancelled = new Series("Cancelled")
             {
                 ChartType = SeriesChartType.StackedColumn,
-                Color = AppTheme.Danger,
+                Color = Color.FromArgb(239, 68, 68), // Red (matches Cancelled KPI)
                 Font = new Font("Segoe UI", 8F),
                 XValueType = ChartValueType.Int32
             };
@@ -289,6 +312,8 @@ namespace CRM.winforms.Forms.Reports
                 statusCell.Style.ForeColor = GetStatusColor(d.BookingStatus);
                 statusCell.Style.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             }
+
+            dgvDetails.ClearSelection();
         }
 
         private static Color GetStatusColor(string status) => status?.ToLowerInvariant() switch

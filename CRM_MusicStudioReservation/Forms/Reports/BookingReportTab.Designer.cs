@@ -1,4 +1,4 @@
-﻿namespace CRM.winforms.Forms.Reports
+namespace CRM.winforms.Forms.Reports
 {
     partial class BookingReportTab
     {
@@ -83,38 +83,36 @@
             this.cmbRange.Name = "cmbRange";
             this.cmbRange.SelectedIndexChanged += new System.EventHandler(this.cmbRange_SelectedIndexChanged);
 
-            this.lblFrom.AutoSize = false;
-            this.lblFrom.Size = new System.Drawing.Size(50, 36);
-            this.lblFrom.Location = new System.Drawing.Point(280, 15);
+            this.lblFrom.AutoSize = true;
+            this.lblFrom.Location = new System.Drawing.Point(270, 22);
             this.lblFrom.Text = "From";
             this.lblFrom.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.lblFrom.ForeColor = System.Drawing.Color.FromArgb(107, 114, 128);
             this.lblFrom.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.lblFrom.Name = "lblFrom";
 
-            this.dtpFrom.Size = new System.Drawing.Size(140, 28);
-            this.dtpFrom.Location = new System.Drawing.Point(325, 19);
+            this.dtpFrom.Size = new System.Drawing.Size(130, 28);
+            this.dtpFrom.Location = new System.Drawing.Point(315, 18);
             this.dtpFrom.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.dtpFrom.Format = System.Windows.Forms.DateTimePickerFormat.Short;
             this.dtpFrom.Name = "dtpFrom";
 
-            this.lblTo.AutoSize = false;
-            this.lblTo.Size = new System.Drawing.Size(40, 36);
-            this.lblTo.Location = new System.Drawing.Point(485, 15);
+            this.lblTo.AutoSize = true;
+            this.lblTo.Location = new System.Drawing.Point(460, 22);
             this.lblTo.Text = "To";
             this.lblTo.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.lblTo.ForeColor = System.Drawing.Color.FromArgb(107, 114, 128);
             this.lblTo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.lblTo.Name = "lblTo";
 
-            this.dtpTo.Size = new System.Drawing.Size(140, 28);
-            this.dtpTo.Location = new System.Drawing.Point(515, 19);
+            this.dtpTo.Size = new System.Drawing.Size(130, 28);
+            this.dtpTo.Location = new System.Drawing.Point(490, 18);
             this.dtpTo.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.dtpTo.Format = System.Windows.Forms.DateTimePickerFormat.Short;
             this.dtpTo.Name = "dtpTo";
 
-            this.btnRun.Size = new System.Drawing.Size(120, 40);
-            this.btnRun.Location = new System.Drawing.Point(680, 15);
+            this.btnRun.Size = new System.Drawing.Size(120, 36);
+            this.btnRun.Location = new System.Drawing.Point(635, 14);
             this.btnRun.Text = "▶  Run Report";
             this.btnRun.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.btnRun.ForeColor = System.Drawing.Color.White;
@@ -125,8 +123,8 @@
             this.btnRun.Name = "btnRun";
             this.btnRun.Click += new System.EventHandler(this.btnRun_Click);
 
-            this.btnExport.Size = new System.Drawing.Size(130, 40);
-            this.btnExport.Location = new System.Drawing.Point(815, 15);
+            this.btnExport.Size = new System.Drawing.Size(130, 36);
+            this.btnExport.Location = new System.Drawing.Point(765, 14);
             this.btnExport.Text = "⬇  Export CSV";
             this.btnExport.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.btnExport.ForeColor = System.Drawing.Color.FromArgb(31, 41, 55);
@@ -149,19 +147,19 @@
 
             // ==== Stats row (5 mini cards) ====
             this.pnlStats.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlStats.Height = 100;
+            this.pnlStats.Height = 90;
             this.pnlStats.ColumnCount = 5;
             this.pnlStats.RowCount = 1;
             this.pnlStats.BackColor = System.Drawing.Color.Transparent;
             this.pnlStats.Name = "pnlStats";
-            this.pnlStats.Padding = new System.Windows.Forms.Padding(0, 15, 0, 15);
+            this.pnlStats.Padding = new System.Windows.Forms.Padding(0, 8, 0, 8);
             for (int i = 0; i < 5; i++)
                 this.pnlStats.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 20F));
             this.pnlStats.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
 
             // ==== Chart panel ====
             this.pnlChart.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlChart.Height = 320;
+            this.pnlChart.Height = 240;
             this.pnlChart.BackColor = System.Drawing.Color.White;
             this.pnlChart.Name = "pnlChart";
             this.pnlChart.Padding = new System.Windows.Forms.Padding(20);

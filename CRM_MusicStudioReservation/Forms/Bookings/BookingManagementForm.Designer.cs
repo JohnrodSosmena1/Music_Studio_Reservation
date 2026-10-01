@@ -1,4 +1,4 @@
-﻿namespace CRM_MusicStudioReservation.Forms.Bookings
+namespace CRM_MusicStudioReservation.Forms.Bookings
 {
     partial class BookingManagementForm
     {
@@ -197,6 +197,8 @@
             this.dgvBookings.AllowUserToAddRows = false;
             this.dgvBookings.AllowUserToDeleteRows = false;
             this.dgvBookings.AllowUserToResizeRows = false;
+            this.dgvBookings.ReadOnly = true;
+            this.dgvBookings.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
             this.dgvBookings.RowHeadersVisible = false;
             this.dgvBookings.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvBookings.MultiSelect = false;
@@ -206,6 +208,8 @@
             this.dgvBookings.ColumnHeadersDefaultCellStyle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.dgvBookings.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(249, 250, 251);
             this.dgvBookings.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(107, 114, 128);
+            this.dgvBookings.ColumnHeadersDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(249, 250, 251);
+            this.dgvBookings.ColumnHeadersDefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(107, 114, 128);
             this.dgvBookings.DefaultCellStyle.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.dgvBookings.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(31, 41, 55);
             this.dgvBookings.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(237, 233, 254);
@@ -219,30 +223,37 @@
             this.colId.HeaderText = "ID";
             this.colId.FillWeight = 30;
             this.colId.Name = "colId";
+            this.colId.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
 
             this.colCode.HeaderText = "Code";
             this.colCode.FillWeight = 80;
             this.colCode.Name = "colCode";
+            this.colCode.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
 
             this.colCustomer.HeaderText = "Client Name";
             this.colCustomer.FillWeight = 90;
             this.colCustomer.Name = "colCustomer";
+            this.colCustomer.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
 
             this.colStudio.HeaderText = "Studio";
             this.colStudio.FillWeight = 65;
             this.colStudio.Name = "colStudio";
+            this.colStudio.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
 
             this.colStart.HeaderText = "Start";
             this.colStart.FillWeight = 100;
             this.colStart.Name = "colStart";
+            this.colStart.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
 
             this.colAmount.HeaderText = "Amount";
             this.colAmount.FillWeight = 60;
             this.colAmount.Name = "colAmount";
+            this.colAmount.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
 
             this.colStatus.HeaderText = "Status";
             this.colStatus.FillWeight = 70;
             this.colStatus.Name = "colStatus";
+            this.colStatus.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
 
             // colActions — styled exactly like Inventory's
             this.colActions.HeaderText = "Actions";
@@ -253,6 +264,7 @@
             this.colActions.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(139, 92, 246);
             this.colActions.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(237, 233, 254);
             this.colActions.DefaultCellStyle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.colActions.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
 
             this.dgvBookings.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
                 this.colId,

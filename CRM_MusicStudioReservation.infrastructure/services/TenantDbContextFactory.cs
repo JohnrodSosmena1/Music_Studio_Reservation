@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using CRM_MusicStudioSystem.infrastructure.data;
@@ -24,6 +24,23 @@ namespace CRM_MusicStudioSystem.infrastructure.services
         public async Task<TenantCRMDbContext> CreateAsync(int companyId)
         {
             var databaseInfo = await _resolver.GetDatabaseInfoAsync(companyId);
+
+            if (databaseInfo.ServerName.Contains("localdb", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(databaseInfo.CredentialKey, "LocalDB", StringComparison.OrdinalIgnoreCase))
+            {
+                var localConnString =
+                    $"Server={databaseInfo.ServerName};" +
+                    $"Database={databaseInfo.DatabaseName};" +
+                    $"Integrated Security=True;" +
+                    $"TrustServerCertificate=True;" +
+                    $"MultipleActiveResultSets=True;";
+
+                var localOptions = new DbContextOptionsBuilder<TenantCRMDbContext>()
+                    .UseSqlServer(localConnString)
+                    .Options;
+
+                return new TenantCRMDbContext(localOptions);
+            }
 
             var userId = _configuration[
                 $"TenantCredentials:{databaseInfo.CredentialKey}:UserId"];

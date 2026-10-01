@@ -449,6 +449,41 @@ namespace CRM_MusicStudioSystem.infrastructure.services
                 db.Customers.AddRange(customers);
                 await db.SaveChangesAsync();
             }
+
+            // Seed bookings if none exist
+            if (!await db.Bookings.AnyAsync())
+            {
+                var studios = await db.Studios.Where(s => s.IsActive).OrderBy(s => s.StudioId).ToListAsync();
+                var customers = await db.Customers.OrderBy(c => c.CustomerId).ToListAsync();
+                if (studios.Count > 0 && customers.Count > 0)
+                {
+                    int seq = 1;
+                    var baseDate = DateTime.UtcNow.Date;
+                    foreach (var std in studios)
+                    {
+                        for (int i = 0; i < 2; i++)
+                        {
+                            var cust = customers[(seq - 1) % customers.Count];
+                            var start = baseDate.AddDays(i - 1).AddHours(10 + (i * 3));
+                            var end = start.AddHours(2);
+                            db.Bookings.Add(new Booking
+                            {
+                                BookingCode = $"BKG-{seq:D5}",
+                                StudioId = std.StudioId,
+                                CustomerId = cust.CustomerId,
+                                StartTime = start,
+                                EndTime = end,
+                                TotalAmount = std.HourlyRate * 2,
+                                BookingStatus = i == 0 ? BookingStatus.Confirmed : BookingStatus.CheckedIn,
+                                Notes = $"Seeded booking for {std.StudioName}",
+                                CreatedAt = DateTime.UtcNow
+                            });
+                            seq++;
+                        }
+                    }
+                    await db.SaveChangesAsync();
+                }
+            }
         }
 
         /// <summary>
@@ -456,11 +491,229 @@ namespace CRM_MusicStudioSystem.infrastructure.services
         /// </summary>
         public async Task SeedAllCompaniesAsync(MasterCRMDbContext masterDb)
         {
+            var proPlan = await masterDb.SubscriptionPlans.FirstOrDefaultAsync(p => p.PlanCode == "PLAN-PRO");
+            var entPlan = await masterDb.SubscriptionPlans.FirstOrDefaultAsync(p => p.PlanCode == "PLAN-ENT");
+            var basicPlan = await masterDb.SubscriptionPlans.FirstOrDefaultAsync(p => p.PlanCode == "PLAN-BASIC")
+                ?? await masterDb.SubscriptionPlans.FirstOrDefaultAsync();
+
+            var now = DateTime.UtcNow;
+
+            // Company 1 (TEN-00001)
+            var company1 = await masterDb.Companies.FirstOrDefaultAsync(c => c.CompanyCode == "TEN-00001" || c.Subdomain == "soundwave");
+            if (company1 == null)
+            {
+                company1 = new Company
+                {
+                    CompanyCode = "TEN-00001",
+                    CompanyName = "SoundWave Music Studio",
+                    Subdomain = "soundwave",
+                    OwnerFirstName = "John",
+                    OwnerLastName = "Doe",
+                    OwnerEmail = "admin@company1.com",
+                    ContactNumber = "+63 912 345 6789",
+                    TimeZone = "Asia/Manila",
+                    Status = "Active",
+                    SubscriptionPlanId = proPlan?.SubscriptionPlanId,
+                    SubscriptionStart = now.AddMonths(-1),
+                    SubscriptionEnd = now.AddMonths(11),
+                    IsActive = true,
+                    CreatedAt = now.AddMonths(-1),
+                    UpdatedAt = now
+                };
+                masterDb.Companies.Add(company1);
+                await masterDb.SaveChangesAsync();
+
+                masterDb.CompanyDatabases.Add(new CompanyDatabase
+                {
+                    CompanyId = company1.CompanyId,
+                    ServerName = "(localdb)\\mssqllocaldb",
+                    DatabaseName = "MusicStudioDb",
+                    CredentialKey = "LocalDB",
+                    IsActive = true
+                });
+
+                if (proPlan != null)
+                {
+                    var sub1 = new Subscription
+                    {
+                        CompanyId = company1.CompanyId,
+                        SubscriptionPlanId = proPlan.SubscriptionPlanId,
+                        Status = "Active",
+                        StartedAt = now.AddMonths(-1),
+                        ExpiresAt = now.AddMonths(11),
+                        AutoRenew = true,
+                        CreatedAt = now.AddMonths(-1),
+                        UpdatedAt = now
+                    };
+                    masterDb.Subscriptions.Add(sub1);
+                    await masterDb.SaveChangesAsync();
+
+                    masterDb.SubscriptionInvoices.Add(new SubscriptionInvoice
+                    {
+                        InvoiceNumber = "INV-00001",
+                        CompanyId = company1.CompanyId,
+                        SubscriptionId = sub1.SubscriptionId,
+                        Amount = proPlan.Price,
+                        Status = "Paid",
+                        IssuedAt = now.AddMonths(-1),
+                        DueAt = now.AddMonths(-1).AddDays(15),
+                        PaidAt = now.AddMonths(-1),
+                        PaymentMethod = "Credit Card",
+                        Notes = "Pro monthly subscription",
+                        CreatedAt = now.AddMonths(-1)
+                    });
+                }
+                await masterDb.SaveChangesAsync();
+            }
+
+            // Company 2 (TEN-00002)
+            var company2 = await masterDb.Companies.FirstOrDefaultAsync(c => c.CompanyCode == "TEN-00002" || c.Subdomain == "harmonysound");
+            if (company2 == null)
+            {
+                company2 = new Company
+                {
+                    CompanyCode = "TEN-00002",
+                    CompanyName = "Harmony Sound & Rehearsal",
+                    Subdomain = "harmonysound",
+                    OwnerFirstName = "Sarah",
+                    OwnerLastName = "Jenkins",
+                    OwnerEmail = "admin@company2.com",
+                    ContactNumber = "+63 920 888 1234",
+                    TimeZone = "Asia/Manila",
+                    Status = "Active",
+                    SubscriptionPlanId = entPlan?.SubscriptionPlanId,
+                    SubscriptionStart = now.AddMonths(-2),
+                    SubscriptionEnd = now.AddMonths(10),
+                    IsActive = true,
+                    CreatedAt = now.AddMonths(-2),
+                    UpdatedAt = now
+                };
+                masterDb.Companies.Add(company2);
+                await masterDb.SaveChangesAsync();
+
+                masterDb.CompanyDatabases.Add(new CompanyDatabase
+                {
+                    CompanyId = company2.CompanyId,
+                    ServerName = "(localdb)\\mssqllocaldb",
+                    DatabaseName = "MusicStudioDb",
+                    CredentialKey = "LocalDB",
+                    IsActive = true
+                });
+
+                if (entPlan != null)
+                {
+                    var sub2 = new Subscription
+                    {
+                        CompanyId = company2.CompanyId,
+                        SubscriptionPlanId = entPlan.SubscriptionPlanId,
+                        Status = "Active",
+                        StartedAt = now.AddMonths(-2),
+                        ExpiresAt = now.AddMonths(10),
+                        AutoRenew = true,
+                        CreatedAt = now.AddMonths(-2),
+                        UpdatedAt = now
+                    };
+                    masterDb.Subscriptions.Add(sub2);
+                    await masterDb.SaveChangesAsync();
+
+                    masterDb.SubscriptionInvoices.Add(new SubscriptionInvoice
+                    {
+                        InvoiceNumber = "INV-00002",
+                        CompanyId = company2.CompanyId,
+                        SubscriptionId = sub2.SubscriptionId,
+                        Amount = entPlan.Price,
+                        Status = "Paid",
+                        IssuedAt = now.AddMonths(-2),
+                        DueAt = now.AddMonths(-2).AddDays(15),
+                        PaidAt = now.AddMonths(-2),
+                        PaymentMethod = "Bank Transfer",
+                        Notes = "Enterprise annual billing invoice",
+                        CreatedAt = now.AddMonths(-2)
+                    });
+                }
+                await masterDb.SaveChangesAsync();
+            }
+
+            // Company 3 (TEN-00003)
+            var company3 = await masterDb.Companies.FirstOrDefaultAsync(c => c.CompanyCode == "TEN-00003" || c.Subdomain == "cadence");
+            if (company3 == null)
+            {
+                company3 = new Company
+                {
+                    CompanyCode = "TEN-00003",
+                    CompanyName = "Cadence Audio Studios",
+                    Subdomain = "cadence",
+                    OwnerFirstName = "David",
+                    OwnerLastName = "Miller",
+                    OwnerEmail = "admin@company3.com",
+                    ContactNumber = "+63 918 777 9999",
+                    TimeZone = "Asia/Manila",
+                    Status = "Active",
+                    SubscriptionPlanId = basicPlan?.SubscriptionPlanId,
+                    SubscriptionStart = now.AddMonths(-1),
+                    SubscriptionEnd = now.AddMonths(11),
+                    IsActive = true,
+                    CreatedAt = now.AddMonths(-1),
+                    UpdatedAt = now
+                };
+                masterDb.Companies.Add(company3);
+                await masterDb.SaveChangesAsync();
+
+                masterDb.CompanyDatabases.Add(new CompanyDatabase
+                {
+                    CompanyId = company3.CompanyId,
+                    ServerName = "(localdb)\\mssqllocaldb",
+                    DatabaseName = "MusicStudioDb",
+                    CredentialKey = "LocalDB",
+                    IsActive = true
+                });
+
+                if (basicPlan != null)
+                {
+                    var sub3 = new Subscription
+                    {
+                        CompanyId = company3.CompanyId,
+                        SubscriptionPlanId = basicPlan.SubscriptionPlanId,
+                        Status = "Active",
+                        StartedAt = now.AddMonths(-1),
+                        ExpiresAt = now.AddMonths(11),
+                        AutoRenew = true,
+                        CreatedAt = now.AddMonths(-1),
+                        UpdatedAt = now
+                    };
+                    masterDb.Subscriptions.Add(sub3);
+                    await masterDb.SaveChangesAsync();
+
+                    masterDb.SubscriptionInvoices.Add(new SubscriptionInvoice
+                    {
+                        InvoiceNumber = "INV-00003",
+                        CompanyId = company3.CompanyId,
+                        SubscriptionId = sub3.SubscriptionId,
+                        Amount = basicPlan.Price,
+                        Status = "Paid",
+                        IssuedAt = now.AddMonths(-1),
+                        DueAt = now.AddMonths(-1).AddDays(15),
+                        PaidAt = now.AddMonths(-1),
+                        PaymentMethod = "Credit Card",
+                        Notes = "Basic annual billing invoice",
+                        CreatedAt = now.AddMonths(-1)
+                    });
+                }
+                await masterDb.SaveChangesAsync();
+            }
+
             var companies = await masterDb.Companies.AsNoTracking().ToListAsync();
 
             foreach (var company in companies)
             {
-                await SeedCompanyDataAsync(company.CompanyId);
+                try
+                {
+                    await SeedCompanyDataAsync(company.CompanyId);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Seeder] Note for tenant {company.CompanyId}: {ex.Message}");
+                }
             }
         }
     }

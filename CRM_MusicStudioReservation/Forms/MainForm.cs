@@ -15,6 +15,8 @@ using CRM_MusicStudioReservation.Forms.Bookings;
 using CRM_MusicStudioReservation.Forms.Customers;
 using CRM_MusicStudioReservation.Forms.Studios;
 using CRM_MusicStudioReservation.Forms.Terms;
+using CRM_MusicStudioReservation.Forms.Organizations;
+using CRM_MusicStudioReservation.Forms.Subscriptions;
 
 
 namespace CRM_MusicStudioReservation.Forms
@@ -39,19 +41,37 @@ namespace CRM_MusicStudioReservation.Forms
                 lblUserInfo.Text = $"{_auth.CurrentUser.FullName}   ·   {_auth.CurrentUser.Role}";
             }
 
+            lblPageTitle.UseMnemonic = false;
+            btnNavTerms.UseMnemonic = false;
+
             // Wire nav buttons
             WireNavButton(btnNavDashboard, "Dashboard", ShowDashboard);
+            WireNavButton(btnNavOrganizations, "Studio Organizations", ShowOrganizations);
+            WireNavButton(btnNavSubscriptions, "Subscriptions", ShowSubscriptions);
+            WireNavButton(btnNavTerms, "Terms & Conditions", ShowTermsManagement);
             WireNavButton(btnNavBookings, "Bookings", ShowBookings);
             WireNavButton(btnNavCustomers, "Customers", ShowCustomerManagement);
             WireNavButton(btnNavStudios, "Studios", ShowStudioManagement);
             WireNavButton(btnNavInventory, "Inventory", ShowInventoryManagement);
             WireNavButton(btnNavEngagement, "Customer Engagement", ShowCustomerEngagement);
             WireNavButton(btnNavReports, "Reports", ShowReports);
-            WireNavButton(btnNavTerms, "Terms & Conditions", ShowTermsManagement);
 
+            pnlNavItems.Resize += (s, e) => RepositionNavButtons();
             SetActiveNav(btnNavDashboard);
             ApplyRoleBasedAccess();
             ShowDashboard();
+
+            // Wire logout button hover
+            btnLogout.MouseEnter += (s, e) =>
+            {
+                btnLogout.BackColor = Color.FromArgb(60, 40, 100);
+                btnLogout.ForeColor = Color.White;
+            };
+            btnLogout.MouseLeave += (s, e) =>
+            {
+                btnLogout.BackColor = AppTheme.PrimaryDark;
+                btnLogout.ForeColor = Color.FromArgb(200, 200, 220);
+            };
         }
 
         // ==================== DASHBOARD ROUTING ====================
@@ -62,7 +82,8 @@ namespace CRM_MusicStudioReservation.Forms
 
             Form dashboard = role switch
             {
-                "superadmin" or "admin" => new AdminDashboardForm(_auth, _api),
+                "superadmin" => new SuperAdminDashboardForm(_auth, _api),
+                "admin" => new AdminDashboardForm(_auth, _api),
                 "staff" => new StaffDashboardForm(_auth, _api),
                 _ => new ClientDashboardForm(_auth, _api)
             };
@@ -124,6 +145,24 @@ namespace CRM_MusicStudioReservation.Forms
             mgmtForm.PreselectBooking(bookingId);
         }
 
+        public void NavigateToOrganizations()
+        {
+            SetActiveNav(btnNavOrganizations);
+            ShowOrganizations();
+        }
+
+        public void NavigateToSubscriptions()
+        {
+            SetActiveNav(btnNavSubscriptions);
+            ShowSubscriptions();
+        }
+
+        public void NavigateToTerms()
+        {
+            SetActiveNav(btnNavTerms);
+            ShowTermsManagement();
+        }
+
         // ==================== BOOK STUDIO WIZARD ====================
 
         private void ShowBookStudio()
@@ -151,10 +190,18 @@ namespace CRM_MusicStudioReservation.Forms
             lblPageTitle.Text = "Studios";
         }
 
-        // ==================== INVENTORY MANAGEMENT ====================
-
         private void ShowInventoryManagement()
         {
+            if (_auth.CurrentUser?.CompanyId != 1)
+            {
+                MessageBox.Show(
+                    "The Inventory Management module is not included in your organization's subscription plan.",
+                    "Plan Feature Locked",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
             var invForm = new InventoryManagementForm(_auth, _api);
             LoadChildForm(invForm);
             lblPageTitle.Text = "Inventory";
@@ -169,10 +216,37 @@ namespace CRM_MusicStudioReservation.Forms
             lblPageTitle.Text = "Customer Engagement";
         }
 
+        // ==================== STUDIO ORGANIZATIONS ====================
+
+        private void ShowOrganizations()
+        {
+            var orgForm = new OrganizationManagementForm(_auth, _api);
+            LoadChildForm(orgForm);
+            lblPageTitle.Text = "Studio Organizations";
+        }
+
+        // ==================== SUBSCRIPTIONS ====================
+
+        private void ShowSubscriptions()
+        {
+            var subForm = new SubscriptionManagementForm(_auth, _api);
+            LoadChildForm(subForm);
+            lblPageTitle.Text = "Subscription Management";
+        }
+
         // ==================== TERMS & CONDITIONS ====================
 
         private void ShowTermsManagement()
         {
+            var role = _auth.CurrentUser?.Role?.ToLowerInvariant() ?? "client";
+            if (role == "superadmin")
+            {
+                var platformTermsForm = new PlatformTermsManagementForm(_auth, _api);
+                LoadChildForm(platformTermsForm);
+                lblPageTitle.Text = "Platform Terms & Policies";
+                return;
+            }
+
             var termsForm = new TermsManagementForm(_auth, _api);
             LoadChildForm(termsForm);
             lblPageTitle.Text = "Terms & Conditions";
@@ -223,13 +297,19 @@ namespace CRM_MusicStudioReservation.Forms
             btn.MouseEnter += (s, e) =>
             {
                 if (btn.BackColor != AppTheme.Primary)
+                {
                     btn.BackColor = Color.FromArgb(60, 40, 100);
+                    btn.ForeColor = Color.White;
+                }
             };
 
             btn.MouseLeave += (s, e) =>
             {
                 if (btn.BackColor != AppTheme.Primary)
+                {
                     btn.BackColor = AppTheme.PrimaryDark;
+                    btn.ForeColor = Color.FromArgb(200, 200, 220);
+                }
             };
 
             btn.Click += (s, e) =>
@@ -247,10 +327,12 @@ namespace CRM_MusicStudioReservation.Forms
                 if (ctrl is Button btn)
                 {
                     btn.BackColor = AppTheme.PrimaryDark;
+                    btn.ForeColor = Color.FromArgb(200, 200, 220);
                 }
             }
 
             active.BackColor = AppTheme.Primary;
+            active.ForeColor = Color.White;
         }
 
         // ==================== ROLE-BASED ACCESS ====================
@@ -259,8 +341,37 @@ namespace CRM_MusicStudioReservation.Forms
         {
             var role = _auth.CurrentUser?.Role?.ToLowerInvariant() ?? "client";
 
+            // Default all SA-specific to false, tenant-specific to true
+            btnNavOrganizations.Visible = false;
+            btnNavSubscriptions.Visible = false;
+
+            btnNavDashboard.Visible = true;
+            btnNavBookings.Visible = true;
+            btnNavCustomers.Visible = true;
+            btnNavStudios.Visible = true;
+            // Feature gating: Inventory is exclusively active for Company 1
+            bool hasInventoryModule = (_auth.CurrentUser?.CompanyId == 1);
+            btnNavInventory.Visible = hasInventoryModule;
+            btnNavEngagement.Visible = true;
+            btnNavReports.Visible = true;
+            btnNavTerms.Visible = true;
+
             switch (role)
             {
+                case "superadmin":
+                    // Super Admin sees ONLY: Dashboard, Organizations, Subscriptions, Terms & Conditions
+                    btnNavOrganizations.Visible = true;
+                    btnNavSubscriptions.Visible = true;
+                    btnNavTerms.Visible = true;
+
+                    btnNavBookings.Visible = false;
+                    btnNavCustomers.Visible = false;
+                    btnNavStudios.Visible = false;
+                    btnNavInventory.Visible = false;
+                    btnNavEngagement.Visible = false;
+                    btnNavReports.Visible = false;
+                    break;
+
                 case "client":
                     btnNavCustomers.Visible = false;
                     btnNavStudios.Visible = false;
@@ -272,12 +383,60 @@ namespace CRM_MusicStudioReservation.Forms
 
                 case "staff":
                     btnNavReports.Visible = false;
-                    // Staff CAN see Customer Engagement
+                    btnNavInventory.Visible = hasInventoryModule;
                     break;
 
                 case "admin":
-                case "superadmin":
+                    btnNavInventory.Visible = hasInventoryModule;
                     break;
+            }
+
+            RepositionNavButtons();
+        }
+
+        private void RepositionNavButtons()
+        {
+            Button[] navButtons = new[]
+            {
+                btnNavDashboard,
+                btnNavOrganizations,
+                btnNavSubscriptions,
+                btnNavTerms,
+                btnNavBookings,
+                btnNavCustomers,
+                btnNavStudios,
+                btnNavInventory,
+                btnNavReports,
+                btnNavEngagement
+            };
+
+            float dpi = this.DeviceDpi > 0 ? this.DeviceDpi / 96.0f : 1.0f;
+            int buttonX = Math.Max(10, (int)(12 * dpi));
+            int topMargin = Math.Max(10, (int)(14 * dpi));
+            int buttonHeight = Math.Max(44, (int)(46 * dpi));
+            int spacing = Math.Max(6, (int)(10 * dpi));
+            int radius = Math.Max(6, (int)(8 * dpi));
+
+            int containerWidth = pnlNavItems.ClientSize.Width;
+            if (containerWidth <= 0)
+                containerWidth = pnlSidebar.ClientSize.Width;
+            if (containerWidth <= 0)
+                containerWidth = (int)(240 * dpi);
+
+            int buttonWidth = Math.Max(200, containerWidth - (buttonX * 2));
+
+            int y = topMargin;
+            foreach (var btn in navButtons)
+            {
+                if (btn.Visible)
+                {
+                    btn.Location = new Point(buttonX, y);
+                    btn.Size = new Size(buttonWidth, buttonHeight);
+                    btn.AutoEllipsis = true;
+                    btn.UseMnemonic = false;
+                    RoundedCorners.Apply(btn, radius);
+                    y += buttonHeight + spacing;
+                }
             }
         }
 

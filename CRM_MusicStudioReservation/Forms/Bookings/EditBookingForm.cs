@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -27,15 +27,12 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
             "05:00 PM", "06:00 PM", "07:00 PM", "08:00 PM", "09:00 PM"
         };
 
-        // Booking statuses for the dropdown
-        private static readonly (int Id, string Name)[] Statuses =
+        private static readonly (int Id, string Name)[] Statuses = new[]
         {
-            (BookingStatuses.Pending, "Pending"),
             (BookingStatuses.Confirmed, "Confirmed"),
             (BookingStatuses.CheckedIn, "Checked In"),
             (BookingStatuses.CheckedOut, "Checked Out"),
-            (BookingStatuses.Cancelled, "Cancelled"),
-            (BookingStatuses.Rescheduled, "Rescheduled")
+            (BookingStatuses.Cancelled, "Cancelled")
         };
 
         private List<CustomerDto> _customers = new();
@@ -66,13 +63,16 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
 
         private async void EditBookingForm_Load(object sender, EventArgs e)
         {
-            foreach (var s in Statuses)
-                cmbStatus.Items.Add(s.Name);
-
             foreach (var t in TimeSlots)
             {
                 cmbStartTime.Items.Add(t);
                 cmbEndTime.Items.Add(t);
+            }
+
+            cmbStatus.Items.Clear();
+            foreach (var s in Statuses)
+            {
+                cmbStatus.Items.Add(s.Name);
             }
 
             await LoadLookupsAsync();
@@ -84,7 +84,7 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
                 if (cmbStudio.Items.Count > 0) cmbStudio.SelectedIndex = 0;
                 cmbStartTime.SelectedIndex = 0;
                 cmbEndTime.SelectedIndex = 1;
-                cmbStatus.SelectedIndex = 0;
+                cmbStatus.SelectedIndex = 0; // Default to Confirmed, but user can change it
             }
             else
             {
@@ -95,7 +95,9 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
         private async System.Threading.Tasks.Task LoadLookupsAsync()
         {
             _customers = await _customerService.GetAllAsync(_companyId);
-            _studios = await _studioService.GetAllAsync(_companyId);
+            var allStudios = await _studioService.GetAllAsync(_companyId);
+            // Only list active studios for booking
+            _studios = allStudios.Where(s => s.IsActive).ToList();
 
             cmbCustomer.Items.Clear();
             foreach (var c in _customers)
@@ -114,7 +116,14 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
             if (custIdx >= 0) cmbCustomer.SelectedIndex = custIdx;
 
             var studioIdx = _studios.FindIndex(s => s.StudioId == _booking.StudioId);
-            if (studioIdx >= 0) cmbStudio.SelectedIndex = studioIdx;
+            if (studioIdx >= 0)
+            {
+                cmbStudio.SelectedIndex = studioIdx;
+            }
+            else
+            {
+                ShowError("The previously assigned studio is currently inactive/unavailable. Please select another.");
+            }
 
             dtpDate.Value = _booking.StartTime.Date;
 
@@ -127,7 +136,7 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
             if (endIdx >= 0) cmbEndTime.SelectedIndex = endIdx;
 
             var statusIdx = Array.FindIndex(Statuses, s => s.Id == _booking.BookingStatus);
-            if (statusIdx >= 0) cmbStatus.SelectedIndex = statusIdx;
+            cmbStatus.SelectedIndex = statusIdx >= 0 ? statusIdx : 0;
 
             txtNotes.Text = _booking.Notes ?? "";
         }
@@ -171,9 +180,20 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
                 ShowError("End time must be after start time.");
                 return;
             }
+            if (cmbStatus.SelectedIndex < 0)
+            {
+                ShowError("Please select a booking status.");
+                return;
+            }
 
             var customerId = _customers[cmbCustomer.SelectedIndex].CustomerId;
-            var studioId = _studios[cmbStudio.SelectedIndex].StudioId;
+            var selectedStudio = _studios[cmbStudio.SelectedIndex];
+            if (!selectedStudio.IsActive)
+            {
+                ShowError("This studio is currently unavailable. Please select another.");
+                return;
+            }
+            var studioId = selectedStudio.StudioId;
             var date = dtpDate.Value.Date;
             var startTime = ParseTimeSlot(TimeSlots[cmbStartTime.SelectedIndex]);
             var endTime = ParseTimeSlot(TimeSlots[cmbEndTime.SelectedIndex]);
@@ -187,13 +207,14 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
             {
                 if (IsCreateMode)
                 {
-                    // 👇 CREATE — BookingCreateRequest has NO Services property in your DTO
+                    // 👇 CREATE
                     var request = new BookingCreateRequest
                     {
                         CustomerId = customerId,
                         StudioId = studioId,
                         StartTime = DateTime.SpecifyKind(date + startTime, DateTimeKind.Utc),
                         EndTime = DateTime.SpecifyKind(date + endTime, DateTimeKind.Utc),
+                        BookingStatus = status,
                         Notes = notes
                     };
 

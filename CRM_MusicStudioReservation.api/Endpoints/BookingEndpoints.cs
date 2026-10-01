@@ -27,7 +27,8 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                 var totalPages = (totalItems + pageSize - 1) / pageSize;
 
                 var items = await query
-                    .OrderByDescending(b => b.CreatedAt)
+                    .OrderBy(b => b.StudioId)
+                    .ThenBy(b => b.BookingId)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
                     .ToListAsync();
@@ -110,6 +111,7 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                         StudioId = dto.StudioId,
                         StartTime = DateTime.SpecifyKind(dto.StartTime, DateTimeKind.Utc),
                         EndTime = DateTime.SpecifyKind(dto.EndTime, DateTimeKind.Utc),
+                        BookingStatus = dto.BookingStatus ?? BookingStatus.Confirmed,
                         Notes = dto.Notes
                     };
 
@@ -188,7 +190,12 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                 var oldSnapshot = $"Status={oldStatus}, Start={booking.StartTime:o}, End={booking.EndTime:o}";
 
                 if (dto.CustomerId.HasValue) booking.CustomerId = dto.CustomerId.Value;
-                if (dto.StudioId.HasValue) booking.StudioId = dto.StudioId.Value;
+                if (dto.StudioId.HasValue)
+                {
+                    var studio = await db.Studios.FirstOrDefaultAsync(s => s.StudioId == dto.StudioId.Value && s.IsActive);
+                    if (studio == null) return Results.BadRequest(new { error = "This studio is currently unavailable. Please select another." });
+                    booking.StudioId = dto.StudioId.Value;
+                }
                 if (dto.StartTime.HasValue) booking.StartTime = DateTime.SpecifyKind(dto.StartTime.Value, DateTimeKind.Utc);
                 if (dto.EndTime.HasValue) booking.EndTime = DateTime.SpecifyKind(dto.EndTime.Value, DateTimeKind.Utc);
                 if (dto.Notes != null) booking.Notes = dto.Notes;
@@ -204,7 +211,7 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                     if (newStatus == BookingStatus.CheckedOut && oldStatus != BookingStatus.CheckedOut)
                         booking.CheckOutTime = DateTime.UtcNow;
 
-                    if (newStatus == BookingStatus.Pending || newStatus == BookingStatus.Confirmed)
+                    if (newStatus == BookingStatus.Confirmed)
                     {
                         booking.CheckInTime = null;
                         booking.CheckOutTime = null;

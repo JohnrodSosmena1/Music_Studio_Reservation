@@ -40,6 +40,8 @@ namespace CRM_MusicStudioReservation.api.DTOs
         [Required]
         public DateTime EndTime { get; set; }
 
+        public BookingStatus? BookingStatus { get; set; }
+
         [StringLength(2000)]
         public string? Notes { get; set; }
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace CRM_MusicStudioReservation.api.DTOs
@@ -94,5 +94,69 @@ namespace CRM_MusicStudioReservation.api.DTOs
         public string CustomerName { get; set; } = string.Empty;
         public decimal TotalSpent { get; set; }
         public int BookingCount { get; set; }
+    }
+
+    // ==================== CRM ANALYTICS REPORT ====================
+
+    public class CrmAnalyticsResponse
+    {
+        public DateTime From { get; set; }
+        public DateTime To { get; set; }
+
+        // Lifecycle KPIs
+        public int TotalCustomers { get; set; }
+        public int ActiveCustomersInPeriod { get; set; }
+        public int NewCustomers { get; set; }
+        public int ReturningCustomers { get; set; }
+        public decimal RetentionRate { get; set; }
+        public decimal ChurnRate { get; set; }
+        public decimal AverageCLV { get; set; }
+        public decimal RepeatBookingRate { get; set; }
+
+        // Pareto 80/20 Attribution
+        public int Top20PercentCustomerCount { get; set; }
+        public decimal Top20PercentRevenue { get; set; }
+        public decimal Top20PercentRevenueShare { get; set; }
+        public decimal TotalPeriodRevenue { get; set; }
+
+        // Behavior
+        public decimal AverageSpendPerVisit { get; set; }
+        public List<PeakHourItem> PeakHours { get; set; } = new();
+        public List<BookingReportStudioItem> StudioPreferences { get; set; } = new();
+
+        // RFM Segmentation
+        public List<RfmSegmentItem> RfmSegments { get; set; } = new();
+
+        // Customer details
+        public List<CustomerRfmItem> CustomerDetails { get; set; } = new();
+    }
+
+    public class PeakHourItem
+    {
+        public int Hour { get; set; }
+        public string TimeLabel { get; set; } = string.Empty;
+        public int BookingCount { get; set; }
+    }
+
+    public class RfmSegmentItem
+    {
+        public string SegmentName { get; set; } = string.Empty;
+        public int CustomerCount { get; set; }
+        public decimal Percentage { get; set; }
+        public decimal TotalRevenue { get; set; }
+        public decimal AverageSpend { get; set; }
+    }
+
+    public class CustomerRfmItem
+    {
+        public int CustomerId { get; set; }
+        public string CustomerCode { get; set; } = string.Empty;
+        public string CustomerName { get; set; } = string.Empty;
+        public int TotalBookings { get; set; }
+        public decimal LifetimeSpend { get; set; }
+        public DateTime? LastBookingDate { get; set; }
+        public int RecencyDays { get; set; }
+        public string RfmSegment { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
     }
 }

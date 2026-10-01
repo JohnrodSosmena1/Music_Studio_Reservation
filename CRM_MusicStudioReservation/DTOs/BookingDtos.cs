@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System;
@@ -12,6 +12,7 @@ namespace CRM.winforms.DTOs
         [JsonPropertyName("studioId")] public int StudioId { get; set; }
         [JsonPropertyName("startTime")] public DateTime StartTime { get; set; }
         [JsonPropertyName("endTime")] public DateTime EndTime { get; set; }
+        [JsonPropertyName("bookingStatus")] public int BookingStatus { get; set; } = 1;
         [JsonPropertyName("notes")] public string? Notes { get; set; }
     }
 

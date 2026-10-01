@@ -41,9 +41,9 @@ namespace CRM_MusicStudioSystem.infrastructure.services
 
             await using var db = await _tenantFactory.CreateAsync(companyId);
 
-            // Ensure studio exists
+            // Ensure studio exists and is active
             var studio = await db.Studios.FirstOrDefaultAsync(s => s.StudioId == booking.StudioId && s.IsActive);
-            if (studio == null) throw new InvalidOperationException("Studio not found or inactive.");
+            if (studio == null) throw new InvalidOperationException("This studio is currently unavailable. Please select another.");
 
             // Availability
             var available = await CheckAvailabilityAsync(companyId, booking.StudioId, booking.StartTime, booking.EndTime);
@@ -55,15 +55,18 @@ namespace CRM_MusicStudioSystem.infrastructure.services
 
             decimal total = Math.Round(studio.HourlyRate * duration, 2);
 
-            // Auto-generate sequential booking code: BK-00001, BK-00002, etc.
+            // Auto-generate sequential booking code: BKG-00001, BKG-00002, etc.
             if (string.IsNullOrWhiteSpace(booking.BookingCode))
             {
                 var count = await db.Bookings.CountAsync();
-                booking.BookingCode = $"BK-{(count + 1):D5}";
+                booking.BookingCode = $"BKG-{(count + 1):D5}";
             }
 
-            // ✅ New bookings ALWAYS start as Pending
-            booking.BookingStatus = BookingStatus.Pending;
+            // Default to Confirmed if not set or invalid
+            if (!Enum.IsDefined(typeof(BookingStatus), booking.BookingStatus))
+            {
+                booking.BookingStatus = BookingStatus.Confirmed;
+            }
 
             db.Bookings.Add(booking);
             await db.SaveChangesAsync();    

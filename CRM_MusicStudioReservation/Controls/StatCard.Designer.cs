@@ -1,4 +1,4 @@
-﻿namespace CRM.winforms.Controls
+namespace CRM.winforms.Controls
 {
     partial class StatCard
     {
@@ -52,21 +52,23 @@
 
             // lblValue
             this.lblValue.AutoSize = false;
-            this.lblValue.Size = new System.Drawing.Size(200, 40);
-            this.lblValue.Location = new System.Drawing.Point(16, 55);
+            this.lblValue.Size = new System.Drawing.Size(200, 42);
+            this.lblValue.Location = new System.Drawing.Point(16, 50);
             this.lblValue.Text = "0";
-            this.lblValue.Font = new System.Drawing.Font("Segoe UI", 22F, System.Drawing.FontStyle.Bold);
+            this.lblValue.Font = new System.Drawing.Font("Segoe UI", 20F, System.Drawing.FontStyle.Bold);
             this.lblValue.ForeColor = System.Drawing.Color.FromArgb(31, 41, 55);
             this.lblValue.Name = "lblValue";
+            this.lblValue.AutoEllipsis = true;
 
             // lblSubtext (optional — used for trend, e.g. "+12% vs last week")
             this.lblSubtext.AutoSize = false;
             this.lblSubtext.Size = new System.Drawing.Size(200, 18);
-            this.lblSubtext.Location = new System.Drawing.Point(16, 92);
+            this.lblSubtext.Location = new System.Drawing.Point(16, 94);
             this.lblSubtext.Text = "";
             this.lblSubtext.Font = new System.Drawing.Font("Segoe UI", 8F);
             this.lblSubtext.ForeColor = System.Drawing.Color.FromArgb(156, 163, 175);
             this.lblSubtext.Name = "lblSubtext";
+            this.lblSubtext.AutoEllipsis = true;
 
             // Add controls
             this.Controls.Add(this.lblIcon);

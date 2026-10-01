@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using CRM_MusicStudioSystem.infrastructure.services;
+using CRM_MusicStudioReservation.domain.entities;
 using Microsoft.AspNetCore.Authorization;
 
 namespace CRM_MusicStudioReservation.api.Endpoints
@@ -28,7 +29,26 @@ namespace CRM_MusicStudioReservation.api.Endpoints
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
                 return Results.BadRequest(new { message = "Email and password are required." });
 
-            var user = await userService.AuthenticateAsync(request.Email, request.Password);
+            AppUser? user;
+            try
+            {
+                user = await userService.AuthenticateAsync(request.Email, request.Password);
+            }
+            catch (Microsoft.Data.SqlClient.SqlException ex)
+            {
+                return Results.Problem(
+                    statusCode: 503,
+                    title: "Database Unavailable",
+                    detail: $"Database connection failed (Error {ex.Number}): {ex.Message}. Please check server connectivity or firewall whitelisting.");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(
+                    statusCode: 500,
+                    title: "Authentication Error",
+                    detail: ex.Message);
+            }
+
             if (user is null)
                 return Results.Unauthorized();
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.Json.Serialization;
 
 namespace CRM.winforms.DTOs
@@ -71,22 +71,20 @@ namespace CRM.winforms.DTOs
 
     public static class BookingStatuses
     {
-        public const int Pending = 1;
-        public const int Confirmed = 2;
-        public const int CheckedIn = 3;
-        public const int CheckedOut = 4;
-        public const int Cancelled = 5;
-        public const int Rescheduled = 6;
+        public const int Confirmed = 1;
+        public const int CheckedIn = 2;
+        public const int CheckedOut = 3;
+        public const int Cancelled = 4;
+        public const int Rescheduled = 5;
 
         public static string GetName(int status) => status switch
         {
-            Pending => "Pending",
             Confirmed => "Confirmed",
             CheckedIn => "Checked In",
             CheckedOut => "Checked Out",
             Cancelled => "Cancelled",
             Rescheduled => "Rescheduled",
-            _ => "Unknown"
+            _ => "Confirmed"
         };
     }
 }

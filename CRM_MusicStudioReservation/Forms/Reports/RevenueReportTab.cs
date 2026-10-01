@@ -1,4 +1,4 @@
-﻿using CRM.winforms.DTOs;
+using CRM.winforms.DTOs;
 using CRM.winforms.Helpers;
 using CRM.winforms.Services;
 using System;
@@ -101,34 +101,32 @@ namespace CRM.winforms.Forms.Reports
             this.cmbRange.FlatStyle = FlatStyle.Flat;
             this.cmbRange.SelectedIndexChanged += new EventHandler(this.cmbRange_SelectedIndexChanged);
 
-            this.lblFrom.AutoSize = false;
-            this.lblFrom.Size = new Size(50, 36);
-            this.lblFrom.Location = new Point(280, 15);
+            this.lblFrom.AutoSize = true;
+            this.lblFrom.Location = new Point(270, 22);
             this.lblFrom.Text = "From";
             this.lblFrom.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             this.lblFrom.ForeColor = Color.FromArgb(107, 114, 128);
             this.lblFrom.TextAlign = ContentAlignment.MiddleLeft;
 
-            this.dtpFrom.Size = new Size(140, 28);
-            this.dtpFrom.Location = new Point(325, 19);
+            this.dtpFrom.Size = new Size(130, 28);
+            this.dtpFrom.Location = new Point(315, 18);
             this.dtpFrom.Font = new Font("Segoe UI", 10F);
             this.dtpFrom.Format = DateTimePickerFormat.Short;
 
-            this.lblTo.AutoSize = false;
-            this.lblTo.Size = new Size(40, 36);
-            this.lblTo.Location = new Point(485, 15);
+            this.lblTo.AutoSize = true;
+            this.lblTo.Location = new Point(460, 22);
             this.lblTo.Text = "To";
             this.lblTo.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             this.lblTo.ForeColor = Color.FromArgb(107, 114, 128);
             this.lblTo.TextAlign = ContentAlignment.MiddleLeft;
 
-            this.dtpTo.Size = new Size(140, 28);
-            this.dtpTo.Location = new Point(515, 19);
+            this.dtpTo.Size = new Size(130, 28);
+            this.dtpTo.Location = new Point(490, 18);
             this.dtpTo.Font = new Font("Segoe UI", 10F);
             this.dtpTo.Format = DateTimePickerFormat.Short;
 
-            this.btnRun.Size = new Size(120, 40);
-            this.btnRun.Location = new Point(680, 15);
+            this.btnRun.Size = new Size(120, 36);
+            this.btnRun.Location = new Point(635, 14);
             this.btnRun.Text = "▶  Run Report";
             this.btnRun.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             this.btnRun.ForeColor = Color.White;
@@ -138,8 +136,8 @@ namespace CRM.winforms.Forms.Reports
             this.btnRun.Cursor = Cursors.Hand;
             this.btnRun.Click += new EventHandler(this.btnRun_Click);
 
-            this.btnExport.Size = new Size(130, 40);
-            this.btnExport.Location = new Point(815, 15);
+            this.btnExport.Size = new Size(130, 36);
+            this.btnExport.Location = new Point(765, 14);
             this.btnExport.Text = "⬇  Export CSV";
             this.btnExport.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             this.btnExport.ForeColor = Color.FromArgb(31, 41, 55);
@@ -161,18 +159,18 @@ namespace CRM.winforms.Forms.Reports
 
             // ==== Stats ====
             this.pnlStats.Dock = DockStyle.Top;
-            this.pnlStats.Height = 100;
+            this.pnlStats.Height = 90;
             this.pnlStats.ColumnCount = 5;
             this.pnlStats.RowCount = 1;
             this.pnlStats.BackColor = Color.Transparent;
-            this.pnlStats.Padding = new Padding(0, 15, 0, 15);
+            this.pnlStats.Padding = new Padding(0, 8, 0, 8);
             for (int i = 0; i < 5; i++)
                 this.pnlStats.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
             this.pnlStats.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
             // ==== Chart ====
             this.pnlChart.Dock = DockStyle.Top;
-            this.pnlChart.Height = 320;
+            this.pnlChart.Height = 240;
             this.pnlChart.BackColor = Color.White;
             this.pnlChart.Padding = new Padding(20);
             this.pnlChart.Name = "pnlChart";
@@ -213,24 +211,39 @@ namespace CRM.winforms.Forms.Reports
             this.dgvTopCustomers.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvTopCustomers.ColumnHeadersHeight = 34;
             this.dgvTopCustomers.RowTemplate.Height = 34;
-            this.dgvTopCustomers.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            this.dgvTopCustomers.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(249, 250, 251);
-            this.dgvTopCustomers.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(107, 114, 128);
+
+            var dgvHeaderStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.FromArgb(249, 250, 251),
+                ForeColor = Color.FromArgb(107, 114, 128),
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                SelectionBackColor = Color.FromArgb(249, 250, 251),
+                SelectionForeColor = Color.FromArgb(107, 114, 128)
+            };
+            this.dgvTopCustomers.ColumnHeadersDefaultCellStyle = dgvHeaderStyle;
             this.dgvTopCustomers.DefaultCellStyle.Font = new Font("Segoe UI", 9F);
             this.dgvTopCustomers.DefaultCellStyle.ForeColor = Color.FromArgb(31, 41, 55);
             this.dgvTopCustomers.DefaultCellStyle.SelectionBackColor = Color.FromArgb(237, 233, 254);
             this.dgvTopCustomers.DefaultCellStyle.SelectionForeColor = Color.FromArgb(31, 41, 55);
             this.dgvTopCustomers.GridColor = Color.FromArgb(229, 231, 235);
             this.dgvTopCustomers.EnableHeadersVisualStyles = false;
+            this.dgvTopCustomers.ScrollBars = ScrollBars.Both;
 
             this.colCustId.HeaderText = "Customer ID";
             this.colCustId.FillWeight = 60;
+            this.colCustId.HeaderCell.Style = dgvHeaderStyle;
+
             this.colCustName.HeaderText = "Customer Name";
             this.colCustName.FillWeight = 200;
+            this.colCustName.HeaderCell.Style = dgvHeaderStyle;
+
             this.colCustSpent.HeaderText = "Total Spent";
             this.colCustSpent.FillWeight = 100;
+            this.colCustSpent.HeaderCell.Style = dgvHeaderStyle;
+
             this.colCustCount.HeaderText = "Bookings";
             this.colCustCount.FillWeight = 80;
+            this.colCustCount.HeaderCell.Style = dgvHeaderStyle;
 
             this.dgvTopCustomers.Columns.AddRange(new DataGridViewColumn[] {
                 this.colCustId, this.colCustName, this.colCustSpent, this.colCustCount
@@ -314,20 +327,34 @@ namespace CRM.winforms.Forms.Reports
                 return;
             }
 
-            var report = await _reportService.GetRevenueReportAsync(companyId, from, to);
-            if (this.IsDisposed) return;
-
-            if (report == null)
+            try
             {
-                MessageBox.Show("Failed to load report.", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
+                btnRun.Enabled = false;
+                btnRun.Text = "⏳ Loading...";
 
-            _lastReport = report;
-            BuildStatCards(report);
-            BuildChart(report);
-            BuildTable(report);
+                var report = await _reportService.GetRevenueReportAsync(companyId, from, to);
+                if (this.IsDisposed) return;
+
+                if (report == null)
+                {
+                    MessageBox.Show("Failed to load report. Please try again.", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                _lastReport = report;
+                BuildStatCards(report);
+                BuildChart(report);
+                BuildTable(report);
+            }
+            finally
+            {
+                if (!this.IsDisposed)
+                {
+                    btnRun.Enabled = true;
+                    btnRun.Text = "▶  Run Report";
+                }
+            }
         }
 
         // ==================== STAT CARDS ====================
@@ -356,13 +383,25 @@ namespace CRM.winforms.Forms.Reports
 
         private Panel BuildStatCard(string title, string value, Color color)
         {
-            var pnl = new Panel { BackColor = Color.White, Padding = new Padding(15), Height = 70 };
+            var pnl = new Panel
+            {
+                BackColor = Color.White,
+                Padding = new Padding(16, 10, 16, 8),
+                Height = 74
+            };
+
+            pnl.Paint += (s, e) =>
+            {
+                using var pen = new Pen(Color.FromArgb(229, 231, 235), 1);
+                e.Graphics.DrawRectangle(pen, 0, 0, pnl.Width - 1, pnl.Height - 1);
+            };
 
             var lblTitle = new Label
             {
                 Text = title,
-                Font = new Font("Segoe UI", 8F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
                 ForeColor = Color.FromArgb(107, 114, 128),
+                AutoSize = false,
                 Dock = DockStyle.Top,
                 Height = 18,
                 TextAlign = ContentAlignment.MiddleLeft
@@ -371,10 +410,12 @@ namespace CRM.winforms.Forms.Reports
             var lblValue = new Label
             {
                 Text = value,
-                Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 16F, FontStyle.Bold),
                 ForeColor = color,
+                AutoSize = false,
                 Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleLeft
+                TextAlign = ContentAlignment.MiddleLeft,
+                AutoEllipsis = true
             };
 
             pnl.Controls.Add(lblValue);
@@ -449,6 +490,7 @@ namespace CRM.winforms.Forms.Reports
                     c.BookingCount
                 );
             }
+            dgvTopCustomers.ClearSelection();
         }
 
         // ==================== EXPORT ====================

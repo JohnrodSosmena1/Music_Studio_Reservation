@@ -2,6 +2,7 @@ using CRM_MusicStudioSystem.infrastructure.data;
 using CRM_MusicStudioSystem.infrastructure.services;
 using CRM_MusicStudioReservation.domain.entities;
 using CRM_MusicStudioReservation.api.Endpoints;
+using CRM_MusicStudioReservation.api.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -27,6 +28,8 @@ builder.Services.AddDbContext<TenantCRMDbContext>(options =>
         builder.Configuration.GetConnectionString("TenantCRM")));
 
 // 👇 Register tenant services 👇
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITenantProvider, TenantProvider>();
 builder.Services.AddScoped<ITenantDatabaseResolver, TenantDatabaseResolver>();
 builder.Services.AddScoped<ITenantDbContextFactory, TenantDbContextFactory>();
 builder.Services.AddScoped<ITenantMigrationService, TenantMigrationService>();
@@ -101,17 +104,17 @@ var app = builder.Build();
 // ============ STARTUP TASKS ============
 using (var scope = app.Services.CreateScope())
 {
-    var userService = scope.ServiceProvider.GetService<IUserService>();
-    if (userService != null)
+    var migrationService = scope.ServiceProvider.GetService<ITenantMigrationService>();
+    if (migrationService != null)
     {
         try
         {
-            await userService.SeedDefaultUsersAsync();
-            Console.WriteLine("[Startup] ✓ Default users seeded.");
+            await migrationService.ApplyMigrationsAsync();
+            Console.WriteLine("[Startup] ✓ Tenant migrations applied.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Startup] ⚠ Could not seed users: {ex.Message}");
+            Console.WriteLine($"[Startup] ⚠ Migration notice: {ex.Message}");
         }
     }
 
@@ -131,6 +134,20 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         Console.WriteLine($"[Startup] ⚠ Seeder notice: {ex.Message}");
+    }
+
+    var userService = scope.ServiceProvider.GetService<IUserService>();
+    if (userService != null)
+    {
+        try
+        {
+            await userService.SeedDefaultUsersAsync();
+            Console.WriteLine("[Startup] ✓ Default users seeded.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Startup] ⚠ Could not seed users: {ex.Message}");
+        }
     }
 }
 
@@ -163,6 +180,12 @@ app.MapReportEndpoints();
 app.MapCustomerInquiryEndpoints();
 app.MapTandCEndpoints();
 app.MapPromotionRationaleEndpoints();
+
+// ==================== Super Admin Platform Endpoints ====================
+app.MapSuperAdminDashboardEndpoints();
+app.MapSuperAdminOrganizationEndpoints();
+app.MapSuperAdminSubscriptionEndpoints();
+app.MapSuperAdminTandCEndpoints();
 
 // ==================== Legacy inline endpoints ====================
 app.MapPost("/companies", async (

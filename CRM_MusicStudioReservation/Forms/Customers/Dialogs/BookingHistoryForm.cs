@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -128,7 +128,6 @@ namespace CRM.winforms.Forms.Customers.Dialogs
 
         private static Color GetStatusColor(int status) => status switch
         {
-            BookingStatuses.Pending => Color.FromArgb(245, 158, 11),
             BookingStatuses.Confirmed => Color.FromArgb(16, 185, 129),
             BookingStatuses.CheckedIn => Color.FromArgb(59, 130, 246),
             BookingStatuses.CheckedOut => Color.FromArgb(107, 114, 128),

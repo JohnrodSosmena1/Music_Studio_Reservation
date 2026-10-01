@@ -1,4 +1,4 @@
-﻿namespace CRM_MusicStudioReservation.Forms.Bookings
+namespace CRM_MusicStudioReservation.Forms.Bookings
 {
     partial class EditBookingForm
     {
@@ -155,7 +155,7 @@
             // lblStatus
             this.lblStatus.AutoSize = true;
             this.lblStatus.Location = new System.Drawing.Point(30, 335);
-            this.lblStatus.Text = "Status";
+            this.lblStatus.Text = "Status *";
             this.lblStatus.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.lblStatus.ForeColor = System.Drawing.Color.FromArgb(55, 65, 81);
             this.lblStatus.Name = "lblStatus";

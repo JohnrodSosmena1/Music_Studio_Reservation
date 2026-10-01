@@ -1,4 +1,4 @@
-﻿using CRM_MusicStudioReservation.api.DTOs;
+using CRM_MusicStudioReservation.api.DTOs;
 using CRM_MusicStudioReservation.domain.entities;
 using CRM_MusicStudioReservation.domain.enums;
 
@@ -32,7 +32,7 @@ namespace CRM_MusicStudioReservation.api.Extensions
             StartTime = dto.StartTime,
             EndTime = dto.EndTime,
             Notes = dto.Notes,
-            BookingStatus = BookingStatus.Pending,
+            BookingStatus = BookingStatus.Confirmed,
             CreatedAt = DateTime.UtcNow
         };
 

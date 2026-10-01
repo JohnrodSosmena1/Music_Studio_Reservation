@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -177,5 +177,127 @@ namespace CRM.winforms.DTOs
 
         [JsonPropertyName("bookingCount")]
         public int BookingCount { get; set; }
+    }
+
+    // ==================== CRM ANALYTICS REPORT ====================
+
+    public class CrmAnalyticsDto
+    {
+        [JsonPropertyName("from")]
+        public DateTime From { get; set; }
+
+        [JsonPropertyName("to")]
+        public DateTime To { get; set; }
+
+        [JsonPropertyName("totalCustomers")]
+        public int TotalCustomers { get; set; }
+
+        [JsonPropertyName("activeCustomersInPeriod")]
+        public int ActiveCustomersInPeriod { get; set; }
+
+        [JsonPropertyName("newCustomers")]
+        public int NewCustomers { get; set; }
+
+        [JsonPropertyName("returningCustomers")]
+        public int ReturningCustomers { get; set; }
+
+        [JsonPropertyName("retentionRate")]
+        public decimal RetentionRate { get; set; }
+
+        [JsonPropertyName("churnRate")]
+        public decimal ChurnRate { get; set; }
+
+        [JsonPropertyName("averageCLV")]
+        public decimal AverageCLV { get; set; }
+
+        [JsonPropertyName("repeatBookingRate")]
+        public decimal RepeatBookingRate { get; set; }
+
+        [JsonPropertyName("top20PercentCustomerCount")]
+        public int Top20PercentCustomerCount { get; set; }
+
+        [JsonPropertyName("top20PercentRevenue")]
+        public decimal Top20PercentRevenue { get; set; }
+
+        [JsonPropertyName("top20PercentRevenueShare")]
+        public decimal Top20PercentRevenueShare { get; set; }
+
+        [JsonPropertyName("totalPeriodRevenue")]
+        public decimal TotalPeriodRevenue { get; set; }
+
+        [JsonPropertyName("averageSpendPerVisit")]
+        public decimal AverageSpendPerVisit { get; set; }
+
+        [JsonPropertyName("peakHours")]
+        public List<PeakHourDto> PeakHours { get; set; } = new();
+
+        [JsonPropertyName("studioPreferences")]
+        public List<BookingReportStudioItem> StudioPreferences { get; set; } = new();
+
+        [JsonPropertyName("rfmSegments")]
+        public List<RfmSegmentDto> RfmSegments { get; set; } = new();
+
+        [JsonPropertyName("customerDetails")]
+        public List<CustomerRfmDto> CustomerDetails { get; set; } = new();
+    }
+
+    public class PeakHourDto
+    {
+        [JsonPropertyName("hour")]
+        public int Hour { get; set; }
+
+        [JsonPropertyName("timeLabel")]
+        public string TimeLabel { get; set; } = string.Empty;
+
+        [JsonPropertyName("bookingCount")]
+        public int BookingCount { get; set; }
+    }
+
+    public class RfmSegmentDto
+    {
+        [JsonPropertyName("segmentName")]
+        public string SegmentName { get; set; } = string.Empty;
+
+        [JsonPropertyName("customerCount")]
+        public int CustomerCount { get; set; }
+
+        [JsonPropertyName("percentage")]
+        public decimal Percentage { get; set; }
+
+        [JsonPropertyName("totalRevenue")]
+        public decimal TotalRevenue { get; set; }
+
+        [JsonPropertyName("averageSpend")]
+        public decimal AverageSpend { get; set; }
+    }
+
+    public class CustomerRfmDto
+    {
+        [JsonPropertyName("customerId")]
+        public int CustomerId { get; set; }
+
+        [JsonPropertyName("customerCode")]
+        public string CustomerCode { get; set; } = string.Empty;
+
+        [JsonPropertyName("customerName")]
+        public string CustomerName { get; set; } = string.Empty;
+
+        [JsonPropertyName("totalBookings")]
+        public int TotalBookings { get; set; }
+
+        [JsonPropertyName("lifetimeSpend")]
+        public decimal LifetimeSpend { get; set; }
+
+        [JsonPropertyName("lastBookingDate")]
+        public DateTime? LastBookingDate { get; set; }
+
+        [JsonPropertyName("recencyDays")]
+        public int RecencyDays { get; set; }
+
+        [JsonPropertyName("rfmSegment")]
+        public string RfmSegment { get; set; } = string.Empty;
+
+        [JsonPropertyName("isActive")]
+        public bool IsActive { get; set; }
     }
 }

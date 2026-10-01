@@ -1,4 +1,4 @@
-﻿using CRM.winforms.Services;
+using CRM.winforms.Services;
 using System;
 using System.Drawing;
 using System.Windows.Forms;
@@ -74,6 +74,7 @@ namespace CRM.winforms.Forms.Reports
 
         private void btnTabBooking_Click(object sender, EventArgs e) => ShowBookingReport();
         private void btnTabRevenue_Click(object sender, EventArgs e) => ShowRevenueReport();
+        private void btnTabLifecycle_Click(object sender, EventArgs e) => ShowLifecycleReport();
 
         private void ShowBookingReport()
         {
@@ -86,6 +87,13 @@ namespace CRM.winforms.Forms.Reports
         {
             SetActiveTab(btnTabRevenue);
             var tab = new RevenueReportTab(_auth, _api);
+            LoadTab(tab);
+        }
+
+        private void ShowLifecycleReport()
+        {
+            SetActiveTab(btnTabLifecycle);
+            var tab = new CustomerLifecycleReportTab(_auth, _api);
             LoadTab(tab);
         }
     }

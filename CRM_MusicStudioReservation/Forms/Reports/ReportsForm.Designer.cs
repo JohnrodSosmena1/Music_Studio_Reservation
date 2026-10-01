@@ -1,4 +1,4 @@
-﻿namespace CRM.winforms.Forms.Reports
+namespace CRM.winforms.Forms.Reports
 {
     partial class ReportsForm
     {
@@ -100,8 +100,23 @@
             this.btnTabRevenue.Name = "btnTabRevenue";
             this.btnTabRevenue.Click += new System.EventHandler(this.btnTabRevenue_Click);
 
+            this.btnTabLifecycle = new System.Windows.Forms.Button();
+            this.btnTabLifecycle.AutoSize = false;
+            this.btnTabLifecycle.Size = new System.Drawing.Size(220, 60);
+            this.btnTabLifecycle.Location = new System.Drawing.Point(390, 0);
+            this.btnTabLifecycle.Text = "👥  Customer CRM & Lifecycle";
+            this.btnTabLifecycle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.btnTabLifecycle.ForeColor = System.Drawing.Color.FromArgb(107, 114, 128);
+            this.btnTabLifecycle.BackColor = System.Drawing.Color.White;
+            this.btnTabLifecycle.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnTabLifecycle.FlatAppearance.BorderSize = 0;
+            this.btnTabLifecycle.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnTabLifecycle.Name = "btnTabLifecycle";
+            this.btnTabLifecycle.Click += new System.EventHandler(this.btnTabLifecycle_Click);
+
             this.pnlTabs.Controls.Add(this.btnTabBooking);
             this.pnlTabs.Controls.Add(this.btnTabRevenue);
+            this.pnlTabs.Controls.Add(this.btnTabLifecycle);
 
             // ==== Content ====
             this.pnlContent.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -128,6 +143,7 @@
         private System.Windows.Forms.Panel pnlTabs;
         private System.Windows.Forms.Button btnTabBooking;
         private System.Windows.Forms.Button btnTabRevenue;
+        private System.Windows.Forms.Button btnTabLifecycle;
 
         private System.Windows.Forms.Panel pnlContent;
     }

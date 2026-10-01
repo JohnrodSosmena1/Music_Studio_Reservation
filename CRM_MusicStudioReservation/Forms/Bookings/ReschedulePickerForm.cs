@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -39,8 +39,7 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
             // Only show bookings that CAN be rescheduled
             // (not Cancelled, not CheckedIn, not CheckedOut)
             var reschedulable = _allBookings
-                .Where(b => b.BookingStatus == BookingStatuses.Pending
-                         || b.BookingStatus == BookingStatuses.Confirmed
+                .Where(b => b.BookingStatus == BookingStatuses.Confirmed
                          || b.BookingStatus == BookingStatuses.Rescheduled)
                 .ToList();
 
@@ -72,7 +71,6 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
 
         private static Color GetStatusColor(int status) => status switch
         {
-            BookingStatuses.Pending => Color.FromArgb(245, 158, 11),
             BookingStatuses.Confirmed => Color.FromArgb(16, 185, 129),
             BookingStatuses.Rescheduled => Color.FromArgb(139, 92, 246),
             _ => Color.Gray
@@ -85,8 +83,7 @@ namespace CRM_MusicStudioReservation.Forms.Bookings
             var search = txtSearch.Text.Trim().ToLowerInvariant();
 
             var reschedulable = _allBookings
-                .Where(b => b.BookingStatus == BookingStatuses.Pending
-                         || b.BookingStatus == BookingStatuses.Confirmed
+                .Where(b => b.BookingStatus == BookingStatuses.Confirmed
                          || b.BookingStatus == BookingStatuses.Rescheduled);
 
             if (!string.IsNullOrEmpty(search))

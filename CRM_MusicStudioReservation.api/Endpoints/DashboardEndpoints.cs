@@ -45,7 +45,7 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                 .CountAsync(b => b.CreatedAt >= today && b.CreatedAt < tomorrow);
 
             var pendingBookings = await db.Bookings
-                .CountAsync(b => b.BookingStatus == BookingStatus.Pending);
+                .CountAsync(b => b.BookingStatus == BookingStatus.Confirmed);
 
             var completedBookings = await db.Bookings
                 .CountAsync(b => b.BookingStatus == BookingStatus.CheckedOut);
@@ -65,7 +65,7 @@ namespace CRM_MusicStudioReservation.api.Endpoints
 
             var thisWeekPending = pendingBookings;
             var lastWeekPending = await db.Bookings
-                .CountAsync(b => b.BookingStatus == BookingStatus.Pending
+                .CountAsync(b => b.BookingStatus == BookingStatus.Confirmed
                               && b.CreatedAt >= lastWeekStart && b.CreatedAt < weekStart);
 
             var thisWeekCompleted = await db.Bookings
@@ -120,8 +120,7 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                     {
                         Date = d.ToString("MMM d"),
                         Completed = dayRows.Where(x => x.BookingStatus == BookingStatus.CheckedOut).Sum(x => x.Count),
-                        Pending = dayRows.Where(x => x.BookingStatus == BookingStatus.Pending
-                                                  || x.BookingStatus == BookingStatus.Confirmed
+                        Pending = dayRows.Where(x => x.BookingStatus == BookingStatus.Confirmed
                                                   || x.BookingStatus == BookingStatus.CheckedIn).Sum(x => x.Count),
                         Cancelled = dayRows.Where(x => x.BookingStatus == BookingStatus.Cancelled).Sum(x => x.Count)
                     };
@@ -326,7 +325,7 @@ namespace CRM_MusicStudioReservation.api.Endpoints
                     && b.CheckInTime != null && b.CheckOutTime == null);
 
             var pendingBookings = await db.Bookings
-                .CountAsync(b => b.BookingStatus == BookingStatus.Pending);
+                .CountAsync(b => b.BookingStatus == BookingStatus.Confirmed);
 
             var availableStudios = await db.Studios.CountAsync(s => s.IsActive);
 

@@ -16,7 +16,7 @@ namespace CRM_MusicStudioReservation.domain.entities
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public decimal TotalAmount { get; set; }
-        public BookingStatus BookingStatus { get; set; } = BookingStatus.Pending;
+        public BookingStatus BookingStatus { get; set; } = BookingStatus.Confirmed;
         public DateTime? CheckInTime { get; set; }
         public DateTime? CheckOutTime { get; set; }
         public string? Notes { get; set; }

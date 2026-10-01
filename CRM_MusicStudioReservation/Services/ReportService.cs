@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -46,6 +46,23 @@ namespace CRM.winforms.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"[ReportService.GetRevenueReport] {ex.Message}");
+                return null;
+            }
+        }
+
+        // ==================== CRM ANALYTICS ====================
+
+        public async Task<CrmAnalyticsDto?> GetCrmAnalyticsAsync(int companyId, DateTime from, DateTime to)
+        {
+            try
+            {
+                var url = $"tenant/{companyId}/reports/crm-analytics" +
+                          $"?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}";
+                return await _api.GetAsync<CrmAnalyticsDto>(url);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ReportService.GetCrmAnalytics] {ex.Message}");
                 return null;
             }
         }
@@ -137,6 +154,76 @@ namespace CRM.winforms.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"[ReportService.ExportRevenueReport] {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Exports the CRM Analytics report to CSV.
+        /// </summary>
+        public static bool ExportCrmAnalyticsToCsv(CrmAnalyticsDto report, string filePath)
+        {
+            try
+            {
+                var sb = new StringBuilder();
+
+                sb.AppendLine("=== CRM LIFECYCLE & RETENTION KPIS ===");
+                sb.AppendLine("TotalCustomers,ActiveInPeriod,NewCustomers,ReturningCustomers,RetentionRate,ChurnRate,AverageCLV,RepeatBookingRate");
+                sb.AppendLine(string.Join(",",
+                    report.TotalCustomers,
+                    report.ActiveCustomersInPeriod,
+                    report.NewCustomers,
+                    report.ReturningCustomers,
+                    $"{report.RetentionRate:0.0}%",
+                    $"{report.ChurnRate:0.0}%",
+                    report.AverageCLV.ToString("0.00"),
+                    $"{report.RepeatBookingRate:0.0}%"));
+
+                sb.AppendLine();
+                sb.AppendLine("=== PARETO 80/20 ATTRIBUTION ===");
+                sb.AppendLine("Top20CustomerCount,Top20Revenue,RevenueSharePercent,TotalPeriodRevenue");
+                sb.AppendLine(string.Join(",",
+                    report.Top20PercentCustomerCount,
+                    report.Top20PercentRevenue.ToString("0.00"),
+                    $"{report.Top20PercentRevenueShare:0.0}%",
+                    report.TotalPeriodRevenue.ToString("0.00")));
+
+                sb.AppendLine();
+                sb.AppendLine("=== RFM SEGMENTS ===");
+                sb.AppendLine("SegmentName,CustomerCount,Percentage,TotalRevenue,AverageSpend");
+                foreach (var seg in report.RfmSegments)
+                {
+                    sb.AppendLine(string.Join(",",
+                        CsvEscape(seg.SegmentName),
+                        seg.CustomerCount,
+                        $"{seg.Percentage:0.0}%",
+                        seg.TotalRevenue.ToString("0.00"),
+                        seg.AverageSpend.ToString("0.00")));
+                }
+
+                sb.AppendLine();
+                sb.AppendLine("=== CUSTOMER RFM DETAILS ===");
+                sb.AppendLine("CustomerId,CustomerCode,CustomerName,TotalBookings,LifetimeSpend,LastBookingDate,RecencyDays,Segment,IsActive");
+                foreach (var c in report.CustomerDetails)
+                {
+                    sb.AppendLine(string.Join(",",
+                        c.CustomerId,
+                        CsvEscape(c.CustomerCode),
+                        CsvEscape(c.CustomerName),
+                        c.TotalBookings,
+                        c.LifetimeSpend.ToString("0.00"),
+                        c.LastBookingDate?.ToString("yyyy-MM-dd") ?? "Never",
+                        c.RecencyDays == 999 ? "N/A" : c.RecencyDays.ToString(),
+                        CsvEscape(c.RfmSegment),
+                        c.IsActive ? "Active" : "Inactive"));
+                }
+
+                File.WriteAllText(filePath, sb.ToString(), Encoding.UTF8);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ReportService.ExportCrmAnalytics] {ex.Message}");
                 return false;
             }
         }

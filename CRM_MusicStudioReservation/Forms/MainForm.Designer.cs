@@ -97,41 +97,49 @@ namespace CRM_MusicStudioReservation.Forms
             this.pnlNavItems.Name = "pnlNavItems";
             this.pnlNavItems.Padding = new System.Windows.Forms.Padding(0, 20, 0, 0);
 
-            // Nav buttons — all created via MakeNavButton with uniform sizing
-            this.btnNavDashboard = MakeNavButton("▶   Dashboard", "btnNavDashboard", 0);
-            this.btnNavBookings = MakeNavButton("📅   Bookings", "btnNavBookings", 50);
-            this.btnNavCustomers = MakeNavButton("👥   Customers", "btnNavCustomers", 100);
-            this.btnNavStudios = MakeNavButton("🎸   Studios", "btnNavStudios", 150);
-            this.btnNavInventory = MakeNavButton("📦   Inventory", "btnNavInventory", 200);
-            this.btnNavReports = MakeNavButton("📊   Reports", "btnNavReports", 250);
-            this.btnNavEngagement = MakeNavButton("🎁   Engagement", "btnNavEngagement", 300);
-            this.btnNavTerms = MakeNavButton("📜   Terms & Policy", "btnNavTerms", 350);
+            // Nav buttons — all created via MakeNavButton with uniform sizing and generous spacing
+            this.btnNavDashboard = MakeNavButton("▶   Dashboard", "btnNavDashboard", 14);
+            this.btnNavOrganizations = MakeNavButton("🏢   Organizations", "btnNavOrganizations", 70);
+            this.btnNavSubscriptions = MakeNavButton("💳   Subscriptions", "btnNavSubscriptions", 126);
+            this.btnNavTerms = MakeNavButton("📜   Terms & Policy", "btnNavTerms", 182);
+            this.btnNavBookings = MakeNavButton("📅   Bookings", "btnNavBookings", 238);
+            this.btnNavCustomers = MakeNavButton("👥   Customers", "btnNavCustomers", 294);
+            this.btnNavStudios = MakeNavButton("🎸   Studios", "btnNavStudios", 350);
+            this.btnNavInventory = MakeNavButton("📦   Inventory", "btnNavInventory", 406);
+            this.btnNavReports = MakeNavButton("📊   Reports", "btnNavReports", 462);
+            this.btnNavEngagement = MakeNavButton("🎁   Engagement", "btnNavEngagement", 518);
 
             this.pnlNavItems.Controls.Add(this.btnNavDashboard);
+            this.pnlNavItems.Controls.Add(this.btnNavOrganizations);
+            this.pnlNavItems.Controls.Add(this.btnNavSubscriptions);
+            this.pnlNavItems.Controls.Add(this.btnNavTerms);
             this.pnlNavItems.Controls.Add(this.btnNavBookings);
             this.pnlNavItems.Controls.Add(this.btnNavCustomers);
             this.pnlNavItems.Controls.Add(this.btnNavStudios);
             this.pnlNavItems.Controls.Add(this.btnNavInventory);
             this.pnlNavItems.Controls.Add(this.btnNavReports);
             this.pnlNavItems.Controls.Add(this.btnNavEngagement);
-            this.pnlNavItems.Controls.Add(this.btnNavTerms);
 
             // Sidebar footer (logout)
             this.pnlSidebarFooter.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.pnlSidebarFooter.Height = 70;
+            this.pnlSidebarFooter.Padding = new System.Windows.Forms.Padding(12, 12, 12, 12);
             this.pnlSidebarFooter.Name = "pnlSidebarFooter";
 
             this.btnLogout.Dock = System.Windows.Forms.DockStyle.Fill;
             this.btnLogout.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnLogout.FlatAppearance.BorderSize = 0;
-            this.btnLogout.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            this.btnLogout.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Bold);
             this.btnLogout.ForeColor = System.Drawing.Color.FromArgb(200, 200, 220);
+            this.btnLogout.BackColor = System.Drawing.Color.FromArgb(45, 27, 78);
             this.btnLogout.Text = "←   Log Out";
             this.btnLogout.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnLogout.Padding = new System.Windows.Forms.Padding(20, 0, 0, 0);
+            this.btnLogout.Padding = new System.Windows.Forms.Padding(16, 0, 0, 0);
             this.btnLogout.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnLogout.Name = "btnLogout";
             this.btnLogout.Click += new System.EventHandler(this.btnLogout_Click);
+            CRM.winforms.Helpers.RoundedCorners.Apply(this.btnLogout, 8);
+            this.btnLogout.Resize += (s, e) => CRM.winforms.Helpers.RoundedCorners.Apply(this.btnLogout, 8);
 
             this.pnlSidebarFooter.Controls.Add(this.btnLogout);
 
@@ -217,18 +225,22 @@ namespace CRM_MusicStudioReservation.Forms
         private System.Windows.Forms.Button MakeNavButton(string text, string name, int yPos)
         {
             var btn = new System.Windows.Forms.Button();
-            btn.Size = new System.Drawing.Size(240, 44);
-            btn.Location = new System.Drawing.Point(0, yPos);
+            btn.Size = new System.Drawing.Size(216, 46);
+            btn.Location = new System.Drawing.Point(12, yPos);
             btn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn.FlatAppearance.BorderSize = 0;
             btn.Text = text;
             btn.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            btn.Padding = new System.Windows.Forms.Padding(20, 0, 0, 0);
-            btn.Font = new System.Drawing.Font("Segoe UI", 11F);
+            btn.Padding = new System.Windows.Forms.Padding(16, 0, 0, 0);
+            btn.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Regular);
             btn.ForeColor = System.Drawing.Color.FromArgb(200, 200, 220);
             btn.BackColor = System.Drawing.Color.FromArgb(45, 27, 78);
             btn.Cursor = System.Windows.Forms.Cursors.Hand;
             btn.Name = name;
+            btn.AutoEllipsis = true;
+            btn.UseMnemonic = false;
+            CRM.winforms.Helpers.RoundedCorners.Apply(btn, 8);
+            btn.Resize += (s, e) => CRM.winforms.Helpers.RoundedCorners.Apply(btn, 8);
             return btn;
         }
 
@@ -241,6 +253,8 @@ namespace CRM_MusicStudioReservation.Forms
         private System.Windows.Forms.Label lblSidebarTitle;
         private System.Windows.Forms.Panel pnlNavItems;
         private System.Windows.Forms.Button btnNavDashboard;
+        private System.Windows.Forms.Button btnNavOrganizations;
+        private System.Windows.Forms.Button btnNavSubscriptions;
         private System.Windows.Forms.Button btnNavBookings;
         private System.Windows.Forms.Button btnNavCustomers;
         private System.Windows.Forms.Button btnNavStudios;
